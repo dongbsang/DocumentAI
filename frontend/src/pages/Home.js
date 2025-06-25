@@ -6,13 +6,13 @@ import { useNavigate } from 'react-router-dom'
 const Home = () => {
   const navigate = useNavigate();
 
+  //업로드 페이지
   const handleStartClick =() => {
     navigate('/upload');
   }
 
   return (
    <div className="home-container">
-      {/* 본문 */}
       <main className="home-main">
         <h2 className="main-title">AI 분석 시작하기</h2>
         <p className="main-description">

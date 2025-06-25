@@ -3,6 +3,7 @@ import '../css/Header.css'
 
 const Header = () => {
 
+    //메뉴 버튼
     const handleMenuClick =() => {
         alert("어떤 기능을 넣을까")
     }

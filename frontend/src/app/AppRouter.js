@@ -6,8 +6,6 @@ import Upload from "../pages/Upload";
 import Result from "../pages/Result";
 
 const AppRouter = () => {
-  //const isAuth = true; // 실제 인증 여부로 교체하세요
-
   return (
     <>
     <Header/>

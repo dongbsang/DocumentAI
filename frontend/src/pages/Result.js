@@ -5,16 +5,16 @@ import "../css/Result.css"
 const Result = () => {
     const navigate = useNavigate();
 
+    //처음으로 돌아가기
     const handleBackClick = () =>{
         navigate("/");
     }
 
+    //결과 다운로드
     const handleDownload = () => {
         alert("결과 다운로드 중... (실제 구현 필요)");
     };
-
-
-
+    
   return (
   <div className="result-container">
       <h2 className="result-title">분석 결과</h2>

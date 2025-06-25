@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 const Upload = () => {
   const [fileName, setFileName] = useState('');
   const navigate = useNavigate();
-
+  
+  //파일 업로드
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -23,7 +24,6 @@ const Upload = () => {
       navigate('/result');
     }
   
-
   return (
     <div className="upload-container">
     <button className="back-button" onClick={handleBack}>
