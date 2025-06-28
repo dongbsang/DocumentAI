@@ -22,10 +22,18 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# dotenv environment variables file
-.env.local
-.env
+# === Python 관련 ===
+__pycache__/
+*.py[cod]
+venv/
 backend/.env
-frontend/.env.local
 
-**/node_modules/
+# === Node.js (React) 관련 ===
+node_modules/
+frontend/build/
+frontend/.env
+
+# === 공통 ===
+*.log
+.DS_Store
+.vscode/
