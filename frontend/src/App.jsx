@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 
 function App() {
+  const apiUrl = process.env.REACT_APP_API_BASE_URL;
+
   const [file, setFile] = useState(null);
   const [text, setText] = useState("");
   const [info, setInfo] = useState(null);
@@ -9,7 +11,7 @@ function App() {
   const handleUpload = async () => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await axios.post("http://localhost:5000/api/upload", formData);
+    const res = await axios.post(`${apiUrl}/upload`, formData);
     setText(res.data.text);
     setInfo(res.data.info);
   };
