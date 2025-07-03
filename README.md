@@ -28,11 +28,12 @@
 방법 B: start-all.sh (bash 스크립트, WSL 또는 Git Bash에서만 가능)
 bash
 
-#!/bin/bash
+'샵'!/bin/bash
+
+.venv/Scripts/activate
 cd backend
-venv/Scripts/activate
 set FLASK_APP=app.py
-set FLASK_ENV=development  # 자동 리로드 + 디버그 모드
+set FLASK_ENV=development  // 자동 리로드 + 디버그 모드
 flask run
 cd ../frontend
 npm start
