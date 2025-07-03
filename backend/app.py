@@ -14,7 +14,19 @@ CORS(app, origins=["http://localhost:3000"]) # 리액트 앱의 CORS 설정
 def upload_file():
     
     uploaded = request.files.get("file")
-    return jsonify({"message": "파일 업로드 완료"})
+    if not uploaded:
+        return jsonify({"error": "No file part"}), 400
+
+    # 파일명만 추출
+    filename = uploaded.filename
+    # OCR 결과에 대한 처리
+    ocr_result = "미구현 상태"
+
+    # 원하는 키로 JSON 응답
+    return jsonify({
+        "filename": filename,
+        "ocr_result": ocr_result
+    })
 
     '''
     # 업로드 파일 존재 여부 확인

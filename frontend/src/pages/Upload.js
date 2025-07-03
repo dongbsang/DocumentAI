@@ -44,9 +44,12 @@ const Upload = () => {
       });
 
       const result = await response.json();
-      console.log('OCR 결과:', result);  // 디버깅용 출력
-      
-      navigate('/result', { state: { result } });
+      navigate('/result', {
+        state: {
+                filename: result.filename,
+                ocrResult: result.ocr_result
+              }
+      });
     } catch (error) {
       console.error('OCR 요청 실패:', error);
       alert('분석 중 오류 발생');

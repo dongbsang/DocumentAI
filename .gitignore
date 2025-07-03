@@ -25,9 +25,10 @@ yarn-error.log*
 # === Python 관련 ===
 __pycache__/
 *.py[cod]
+.venv/
 venv/
 backend/.env
-.venv/
+backend/.env.example
 
 # === Node.js (React) 관련 ===
 node_modules/
