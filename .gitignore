@@ -28,6 +28,7 @@ __pycache__/
 *.py[cod]
 venv/
 backend/.env
+.venv/
 
 
 # === Node.js (React) 관련 ===
