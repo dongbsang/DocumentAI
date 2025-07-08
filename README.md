@@ -29,7 +29,7 @@
 bash
 
 '샵'!/bin/bash
-
+(최초만) python -m venv .venv
 .venv/Scripts/activate
 cd backend
 set FLASK_APP=app.py
