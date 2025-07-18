@@ -6,6 +6,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative; /* 🔹 오버레이 위에 덮이지 않게 설정 */
+  z-index: 0;
 }
 
 .upload-title {
@@ -79,4 +81,17 @@
 
 .back-button:hover {
   text-decoration: underline;
+}
+
+/* ✅ 오버레이 (분석 중 전체 UI 잠금 처리) */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.5);
+  z-index: 999;
+  pointer-events: all;
+  cursor: not-allowed;
 }

@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import '../css/Upload.css';
 import { useNavigate } from 'react-router-dom';
+import ProgressBar from '../components/ProgressBar';
 
 const apiUrl = process.env.REACT_APP_API_BASE_URL;
 
 const Upload = () => {
-  const [fileName, setFileName]           = useState('');
-  const [selectedFile, setSelectedFile]   = useState(null);
-  const [category, setCategory]           = useState('자기소개서');
+  const [fileName, setFileName] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [category, setCategory] = useState('자기소개서');
   const [useHandwriting, setUseHandwriting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [progressStep, setProgressStep] = useState(0);
+
   const navigate = useNavigate();
 
-  // 파일 선택
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) {
@@ -22,7 +25,6 @@ const Upload = () => {
     setSelectedFile(file);
   };
 
-  // 분석 요청 & 결과 페이지로 이동
   const handleResultClick = async () => {
     if (!selectedFile) return alert('파일을 선택해주세요.');
 
@@ -32,37 +34,54 @@ const Upload = () => {
     formData.append('use_handwriting', useHandwriting);
 
     try {
-      // fetch URL : `${apiUrl}/upload`
+      setLoading(true);
+      setProgressStep(1); // 1단계: 문서 타입 확인 중
+
       const response = await fetch(`${apiUrl}/upload`, {
         method: 'POST',
         body: formData,
       });
+
+      setProgressStep(5); // 2단계: 분석 중
+
       if (!response.ok) throw new Error(response.statusText);
 
       const result = await response.json();
+
+      setProgressStep(6); // 3단계: 완료!
+
+      sessionStorage.setItem('analysisResult', JSON.stringify({
+        filename: result.filename,
+        summary: result.summary,
+        info: result.info,
+      }));
+
       navigate('/result', {
         state: {
-          filename:    result.filename,
-          ocrResult:   result.ocr_text,
-          visionInfo:  result.visionInfo
-        }
+          filename: result.filename,
+          summary: result.summary,
+          info: result.info,
+        },
       });
     } catch (err) {
       console.error('분석 중 오류:', err);
       alert('분석 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="upload-container">
-      <button className="back-button" onClick={() => navigate(-1)}>
-        ← 뒤로가기
-      </button>
+      <button className="back-button" onClick={() => navigate(-1)}>← 뒤로가기</button>
       <h2 className="upload-title">문서 업로드</h2>
 
       <div className="category-section">
         <label>문서 카테고리:</label>
-        <select value={category} onChange={e => setCategory(e.target.value)}>
+        <select
+          value={category}
+          onChange={e => setCategory(e.target.value)}
+        >
           <option value="자기소개서">자기소개서</option>
           <option value="영수증">영수증</option>
           <option value="etc">기타</option>
@@ -94,11 +113,14 @@ const Upload = () => {
 
       <button
         className="analyze-button"
-        disabled={!selectedFile}
+        disabled={!selectedFile || loading}
         onClick={handleResultClick}
       >
-        분석 시작
+        {loading ? '분석 중...' : '분석 시작'}
       </button>
+
+      {loading && <ProgressBar step={progressStep} />}
+      {loading && <div className="overlay" />} {/* ✅ 전체 잠금 오버레이 */}
     </div>
   );
 };

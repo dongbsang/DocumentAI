@@ -1,14 +1,16 @@
 import os
-import re
-import json
 import base64
 import mimetypes
-
+import re
+import json
+from enum import Enum
 from io import BytesIO
+
 from flask import Blueprint, request, jsonify, current_app
 
-from app.services.upload_service import dectect_file_format
-# from app.services.ocr_service import extract_text
+from app.services.upload_service import detect_file_format, FileFormat
+from app.services.rag_service import process_uploaded_file
+from app.services.llm_service import analyze_document
 
 upload_bp = Blueprint("upload", __name__)
 
@@ -19,8 +21,7 @@ def extract_json_object(s: str) -> str:
 @upload_bp.route("/upload", methods=["POST"])
 def upload_file():
     try:
-        # --- 1) 폼 데이터 꺼내기 ---
-        # FormData로 올리면 request.files, data-url로 올리면 request.form
+        # 1) 파일 꺼내기 (request.files 또는 data-url)
         if "file" in request.files:
             f = request.files["file"]
             filename   = f.filename
@@ -30,44 +31,44 @@ def upload_file():
             if not data_url or not data_url.startswith("data:"):
                 return jsonify({"error": "파일이 없습니다."}), 400
 
-            # data:image/pdf;base64,JVBERi0xL...
             header, b64 = data_url.split(",", 1)
             file_bytes = base64.b64decode(b64)
-            # MIME 타입 추출
             mime = header.split(";")[0].split(":", 1)[1]
             ext  = mimetypes.guess_extension(mime) or ""
             filename = f"upload{ext}"
 
-        # (카테고리·손글씨 옵션 등이 필요하면 request.form.get 으로 꺼내세요)
-        # category  = request.form.get("category")
-        # handwrite = request.form.get("handwrite")
-
-        # --- 2) LLM으로 포맷 분류 ---
-        fmt_raw = dectect_file_format(file_bytes, filename)
-        current_app.logger.info(f"RAW format response: {fmt_raw!r}")
-                
-        json_str = extract_json_object(fmt_raw)
-        if not json_str:
-            raise ValueError(f"올바른 JSON이 아닙니다: {fmt_raw}")
+        #print(f"파일명: {filename}, 크기: {len(file_bytes)} bytes")
         
-        current_app.logger.info(f"Extracted JSON: {json_str!r}")
+        # 2) 포맷 판별
+        fmt_enum = detect_file_format(file_bytes, filename)
+        #print(f"포맷 판별 결과: {fmt_enum!r}")
+
+        # 지원하지 않는 형식이면 에러
+        if fmt_enum == FileFormat.UNKNOWN:
+            return jsonify({"error": f"지원하지 않는 파일 형식입니다: {filename}"}), 400
         
-        fmt_data = json.loads(json_str)
-        file_format = fmt_data.get("format", "unknown")
-
-        # --- 3) 
-        # text = extract_text(BytesIO(file_bytes))
-        text = ""
-        info = file_format
-
-        # 4) 결과 리턴 ---
+        # Enum.value에서 실제 포맷 문자열 추출
+        file_format = fmt_enum.value  # "pdf", "hwp", "word", "image"
+        #print(f"파일 형식: {file_format}")
+        
+        # form 옵션
+        category = request.form.get("category", "etc")
+        use_handwriting = request.form.get("use_handwriting", "false").lower() == "true"
+        
+        # 자동 분석 실행
+        summary = analyze_document(
+            file_bytes=file_bytes,
+            file_format=file_format,
+            category=category,
+            use_handwriting=use_handwriting
+        )
+        
+        # 4) 결과 반환
         return jsonify({
             "filename": filename,
-            "ocrResult": {
-                "text": text,
-                "info": info
-            }
-        })
+            "summary": summary,
+            "info": file_format
+        }), 200
 
     except Exception as e:
         current_app.logger.exception("❌ /api/upload 오류")
