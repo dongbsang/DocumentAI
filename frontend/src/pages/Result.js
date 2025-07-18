@@ -8,7 +8,11 @@ const Result = () => {
 
   // 잘못된 접근 시 2초 뒤 홈으로 이동
   useEffect(() => {
-    if (!state || !state.filename || !state.ocrResult) {
+    if (
+      !state ||
+      !state.filename ||
+      (state.summary === undefined && state.info === undefined)
+    ) {
       const timer = setTimeout(() => {
         navigate("/", { replace: true });
       }, 2000);
@@ -17,7 +21,11 @@ const Result = () => {
   }, [state, navigate]);
 
   // state 검증
-  if (!state || !state.filename || !state.ocrResult) {
+  if (
+    !state ||
+    !state.filename ||
+    (state.summary === undefined && state.info === undefined)
+  ) {
     return (
       <div className="result-container">
         <p>잘못된 접근입니다. 홈으로 돌아갑니다.</p>
@@ -25,9 +33,7 @@ const Result = () => {
     );
   }
 
-  // ocrResult 에서 text, info 분리
-  const { filename, ocrResult } = state;
-  const { text, info } = ocrResult;
+  const { filename, summary, info } = state;
 
   const handleBackClick = () => {
     navigate("/");
@@ -44,10 +50,13 @@ const Result = () => {
 
       <div className="result-box">
         <p>✅ 문서 분석이 완료되었습니다.</p>
-        <p>📄 업로드된 파일명: <strong>{filename}</strong></p>
+        <p>
+          📄 업로드된 파일명:&nbsp;
+          <strong>{filename}</strong>
+        </p>
 
         <h3>OCR로 추출된 텍스트</h3>
-        <pre className="ocr-text">{text}</pre>
+        <pre className="ocr-text">{summary}</pre>
 
         <h3>추출 정보</h3>
         <pre className="ocr-info">
@@ -59,7 +68,10 @@ const Result = () => {
         <button className="result-button" onClick={handleDownload}>
           결과 다운로드
         </button>
-        <button className="result-button secondary" onClick={handleBackClick}>
+        <button
+          className="result-button secondary"
+          onClick={handleBackClick}
+        >
           홈으로 돌아가기
         </button>
       </div>
