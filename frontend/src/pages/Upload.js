@@ -35,20 +35,19 @@ const Upload = () => {
 
     try {
       setLoading(true);
-      setProgressStep(1); // 1단계: 문서 타입 확인 중
+      setProgressStep(1); // 1단계: 분석 시작
 
+      setProgressStep(2); // 2단계: 분석 중
       const response = await fetch(`${apiUrl}/upload`, {
         method: 'POST',
         body: formData,
       });
 
-      setProgressStep(5); // 2단계: 분석 중
 
       if (!response.ok) throw new Error(response.statusText);
 
       const result = await response.json();
-
-      setProgressStep(6); // 3단계: 완료!
+      setProgressStep(3); // 3단계: 완료!
 
       sessionStorage.setItem('analysisResult', JSON.stringify({
         filename: result.filename,

@@ -2,9 +2,9 @@ import React from 'react';
 import '../css/ProgressBar.css';
 
 const stepMessages = {
-  1: '① 문서 유형 확인 중...',
-  5: '② 문서 분석 중...',
-  6: '③ 분석 완료!',
+  1: '① 분석 시작',
+  2: '② 문서 분석 중...',
+  3: '③ 분석 완료!',
 };
 
 /**
