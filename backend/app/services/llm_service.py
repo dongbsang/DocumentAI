@@ -3,8 +3,6 @@ from langchain_community.llms import LlamaCpp
 from app.services.rag_service import process_uploaded_file
 from app.services.prompt_service import get_prompt_template
 
-MAX_LENGTH = 2000  # 길이 제한
-
 model_path = os.path.join(
     os.path.dirname(os.path.dirname(__file__)),
     "models",
@@ -14,9 +12,9 @@ model_path = os.path.join(
 llm = LlamaCpp(
     model_path=model_path,
     temperature=0.3,
-    max_tokens=512,
+    max_tokens=2048,
     top_p=0.95,
-    n_ctx=2048,  # 모델 최대 context 크기
+    n_ctx=32768,  # 모델 최대 context 크기
     verbose=True  # 디버깅용 로그 출력
 )
 
@@ -53,10 +51,12 @@ def analyze_document(
             category=category,
             use_handwriting=use_handwriting
         )
-
-        print("llm 시작")
+        print(f"프롬프트 길이: {len(prompt)}")
+        print("start---------------------------------------")
         llm_response = llm.invoke(prompt)
-        print(f"LLM 응답: {llm_response}")
+        print("end---------------------------------------")
+        print(f"응답: {llm_response}")
+        print(f"응답 길이: {len(llm_response)}")
 
         if isinstance(llm_response, dict) and "choices" in llm_response:
             answer = llm_response["choices"][0].get("text", "")
