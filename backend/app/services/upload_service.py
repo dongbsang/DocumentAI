@@ -3,12 +3,15 @@ from pathlib import Path
 import mimetypes
 import filetype
 
+
+# Add an extra blank line to follow PEP 8
 class FileFormat(str, Enum):
-    PDF     = "pdf"
-    HWP     = "hwp"
-    WORD    = "word"
-    IMAGE   = "image"
+    PDF = "pdf"
+    HWP = "hwp"
+    WORD = "word"
+    IMAGE = "image"
     UNKNOWN = "unknown"
+
 
 # 확장자 매핑 딕셔너리
 _EXT_MAP = {
@@ -18,6 +21,7 @@ _EXT_MAP = {
     "docx": FileFormat.WORD,
 }
 _IMAGE_EXTS = {"jpg", "jpeg", "png", "bmp", "tiff", "tif", "gif", "webp"}
+
 
 def detect_file_format(file_bytes: bytes, filename: str) -> FileFormat:
     """
@@ -52,7 +56,13 @@ def detect_file_format(file_bytes: bytes, filename: str) -> FileFormat:
             return FileFormat.IMAGE
         if mime == "application/pdf":
             return FileFormat.PDF
-        if mime in ("application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"):
+        if mime in (
+            "application/msword",
+            (
+                "application/vnd.openxmlformats-officedocument."
+                "wordprocessingml.document"
+            ),
+        ):
             return FileFormat.WORD
 
     return FileFormat.UNKNOWN

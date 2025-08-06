@@ -2,7 +2,9 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
 # ✅ HuggingFace 임베딩 모델 (무료 공개 모델 사용)
-embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+embedding_model = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
 # ✅ 벡터 저장소 경로
 VECTOR_STORE_PATH = "./vectorstore/index.faiss"

@@ -1,8 +1,10 @@
-from langchain.prompts import PromptTemplate
 
 MAX_CONTEXT_LEN = 1500  # LLM 토큰 초과 방지용
 
-def get_prompt_template(context: str, category: str, use_handwriting: bool = False) -> str:
+
+def get_prompt_template(
+    context: str, category: str, use_handwriting: bool = False
+) -> str:
     """
     문서 내용과 카테고리에 따라 적절한 프롬프트 문자열을 생성합니다.
 
@@ -17,7 +19,7 @@ def get_prompt_template(context: str, category: str, use_handwriting: bool = Fal
 
     # 문맥 길이 제한
     context = context.strip()[:MAX_CONTEXT_LEN]
-    
+
     # 손글씨 힌트 텍스트
     handwriting_notice = "[이 문서는 손글씨일 수 있음]\n" if use_handwriting else ""
 
@@ -30,7 +32,6 @@ def get_prompt_template(context: str, category: str, use_handwriting: bool = Fal
         ---
         {context}
         ---
-
         문서로부터 다음 항목을 추출해줘:
         1. 상호명
         2. 날짜
@@ -40,7 +41,6 @@ def get_prompt_template(context: str, category: str, use_handwriting: bool = Fal
 
         JSON 형식으로 작성해줘.
         """
-        
     elif category == "자기소개서":
         template = f"""
         {handwriting_notice}
@@ -48,15 +48,13 @@ def get_prompt_template(context: str, category: str, use_handwriting: bool = Fal
         ---
         {context}
         ---
-
         자기소개서를 요약하고 다음 항목을 뽑아줘:
-        1. 이름 
+        1. 이름
         2. 학위, 전공
         3. 경력 요약
 
         핵심 내용만 간결하게 bullet point 형식으로 정리해줘.
         """
-
     else:
         template = f"""
         {handwriting_notice}
