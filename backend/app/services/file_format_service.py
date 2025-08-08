@@ -1,27 +1,24 @@
-# app/services/upload_service.py
-
 import json
 import mimetypes
-from io import BytesIO
 
-import fitz  # PyMuPDF
+import fitz
 
 def detect_file_format(file_bytes: bytes, filename: str) -> str:
     """
     파일 바이트와 파일명을 입력받아 JSON 문자열로 반환합니다.
     반환 예시: '{"format": "searchable_pdf", "pages": 3}'
-    
+
     format 종류:
       - searchable_pdf: 텍스트가 포함된 PDF
       - scanned_pdf: 이미지 형태만 있는 스캔 PDF
       - image: 일반 이미지 파일 (PNG, JPEG 등)
       - unknown_pdf: PDF이지만 분석 실패
       - unknown: 위 분류에 속하지 않는 파일
-    
+   
     Args:
         file_bytes (bytes): 업로드된 파일의 바이트 스트림
         filename (str): 원본 파일명 (확장자 검사용)
-    
+
     Returns:
         str: JSON으로 직렬화된 형식 정보
     """

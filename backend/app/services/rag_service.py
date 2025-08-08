@@ -4,7 +4,16 @@ from app.services.pdf_service import extract_text_from_pdf
 from app.services.text_splitter_service import split_text
 from app.services.vector_store_service import create_vectorstore_from_chunks
 
+
 def deduplicate_lines(text: str) -> str:
+    """_summary_
+
+    Args:
+        text (str): _description_
+
+    Returns:
+        str: _description_
+    """
     seen = set()
     result = []
     for line in text.splitlines():
@@ -13,6 +22,7 @@ def deduplicate_lines(text: str) -> str:
             seen.add(stripped)
             result.append(stripped)
     return "\n".join(result)
+
 
 def process_uploaded_file(file_bytes: bytes, file_format: str) -> Dict:
     """
@@ -29,7 +39,6 @@ def process_uploaded_file(file_bytes: bytes, file_format: str) -> Dict:
             "retriever": 벡터 검색용 retriever 객체 (추후 RAG에 사용 가능)
         }
     """
-
     # 1. 텍스트 추출 (OCR 또는 PDF)
     if file_format == "image":
         text = extract_text_from_image(file_bytes)
@@ -41,15 +50,12 @@ def process_uploaded_file(file_bytes: bytes, file_format: str) -> Dict:
 
     if not text.strip():
         text = "[텍스트를 추출하지 못했습니다.]"
-        print(text)    
-        
+        print(text)
     # 2. 텍스트 분할 (chunking)
     chunks = split_text(text)
     print(f"분할된 청크 수: {len(chunks)}")
-    
     # 3. 벡터 저장소 생성 (메모리 내)
     vectorstore = create_vectorstore_from_chunks(chunks)
-
     return {
         "text": text,
         "chunks": chunks,
