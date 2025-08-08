@@ -1,6 +1,5 @@
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_core.documents import Document
 import os
 
 # ✅ HuggingFace 임베딩 모델
@@ -19,7 +18,7 @@ def create_vectorstore_from_chunks(chunks: list[str]) -> FAISS:
     """
     if not chunks:
         raise ValueError("입력된 텍스트 청크가 비어 있습니다.")
-    
+
     return FAISS.from_texts(chunks, embedding=embedding_model)
 
 

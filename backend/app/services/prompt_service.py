@@ -3,6 +3,7 @@ import os
 
 MAX_CONTEXT_LEN = 1500  # LLM 토큰 초과 방지용
 
+
 def load_resume_prompt(category: str, context: str) -> str:
     """
     카테고리에 맞는 YAML 프롬프트를 로드하고 context를 삽입합니다.
@@ -17,8 +18,9 @@ def load_resume_prompt(category: str, context: str) -> str:
 
     template = prompt_yaml.get("template", "")
     prompt = template.replace("{{context}}", context.strip())
-    
+
     return prompt
+
 
 def get_prompt_template(
     context: str, category: str, use_handwriting: bool = False
@@ -33,5 +35,5 @@ def get_prompt_template(
     prompt = load_resume_prompt(category, context)
     if not prompt:
         raise ValueError("프롬프트를 로드할 수 없습니다. 카테고리를 확인하세요.")
-    
+
     return (handwriting_notice + prompt).strip()

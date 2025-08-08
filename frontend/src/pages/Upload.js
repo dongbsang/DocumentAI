@@ -8,7 +8,7 @@ const apiUrl = process.env.REACT_APP_API_BASE_URL;
 const Upload = () => {
   const [fileName, setFileName] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [category, setCategory] = useState('자기소개서');
+  const [category, setCategory] = useState('이력서');
   const [useHandwriting, setUseHandwriting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
@@ -82,7 +82,7 @@ const Upload = () => {
           value={category}
           onChange={e => setCategory(e.target.value)}
         >
-          <option value="자기소개서">자기소개서</option>
+          <option value="이력서">이력서</option>
           <option value="영수증">영수증</option>
           <option value="etc">기타</option>
         </select>
