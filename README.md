@@ -41,43 +41,11 @@ deactivate
 
 ------------------------------------------------------------------------------------------------------------------------
 
-## 🧠 LLM 모델 설치 가이드 (mistral-7b-instruct-v0.1.Q5_K_M.gguf)
-이 프로젝트는 로컬 LLM 모델인 Mistral 7B Instruct (.gguf) 형식의 모델을 사용합니다.
-아래 절차를 따라 모델을 다운로드하고, 실행 경로에 배치해 주세요.
-📁 1. 모델 저장 디렉토리 준비
-mkdir -p backend/app/models
-🔗 2. 모델 다운로드
-모델 파일은 HuggingFace에서 받을 수 있습니다. 아래 명령어 중 택 1:
+🧠 LLM 모델 및 Ollama 설치 가이드
+이 프로젝트는 문서 AI 파이프라인에서 로컬 LLM(Mistral-7B) 모델을 실행하기 위해 Ollama를 사용합니다.
+Ollama는 간편하게 로컬 LLM을 다운로드 및 실행할 수 있는 통합 플랫폼입니다.
 
-✅ 방법 1: git lfs를 사용하는 경우
-# Git LFS가 설치되어 있어야 합니다.
-git lfs install
-git clone https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF
-cp Mistral-7B-Instruct-v0.1-GGUF/mistral-7b-instruct-v0.1.Q5_K_M.gguf backend/app/models/
-✅ 방법 2: 직접 다운로드 (wget or 브라우저)
-
-# wget 사용 시
-wget -O backend/app/models/mistral-7b-instruct-v0.1.Q5_K_M.gguf \
-https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF/resolve/main/mistral-7b-instruct-v0.1.Q5_K_M.gguf
-또는 브라우저에서 아래 링크 접속 후 수동 다운로드:
-👉 https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF/tree/main
-
-✅ 3. 다운로드 완료 후 디렉토리 확인
-최종적으로 다음 경로에 모델이 위치해야 합니다:
-
-backend/
-├── app/
-│   ├── models/
-│   │   └── mistral-7b-instruct-v0.1.Q5_K_M.gguf
-⚠️ 주의 사항
-해당 모델은 약 4GB 이상이므로 충분한 디스크 용량이 필요합니다.
-
-최초 실행 시 CPU 환경에서는 속도가 다소 느릴 수 있습니다. (GPU 가속은 선택적으로 구성 가능)
-
-------------------------------------------------------------------------------------------------------------------------
-
-🧠 LLM 모델 및 llama-cpp 설치 가이드
-이 프로젝트는 문서 AI 파이프라인에서 로컬 LLM (Mistral-7B) 모델을 실행하기 위해 llama-cpp-python 라이브러리를 사용합니다. 아래 절차에 따라 환경을 세팅해 주세요.
+아래 절차에 따라 환경을 세팅해 주세요.
 
 📦 1. Python 환경 설정
 Python 3.10+ 이상이 권장됩니다.
@@ -85,61 +53,56 @@ Python 3.10+ 이상이 권장됩니다.
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install --upgrade pip
-🧱 2. llama-cpp-python 설치
-llama-cpp-python은 로컬에서 GGUF 포맷 LLM을 실행할 수 있게 해주는 경량 라이브러리입니다.
 
-✅ CMake 기반 수동 설치
-cd backend/llama-cpp-python
+🔧 2. Ollama 설치
+운영체제에 따라 아래 방식으로 설치합니다:
 
-# CPU 전용 설치
-pip install -r requirements.txt
-pip install .
+✅ Windows
+아래 링크에서 .msi 설치 파일 다운로드
+👉 https://ollama.com/download
+실행 후 설치 및 재부팅
 
-# GPU 사용 (CUDA)
-CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install .
-💻 Windows 환경 - Visual Studio C++ 빌드 도구 설치
-Windows에서는 C++ 컴파일을 위해 Visual Studio Build Tools가 필요합니다.
+✅ macOS
+brew install ollama
 
-🔧 설치 방법:
-아래 링크에서 Visual Studio Build Tools 설치:
-👉 https://visualstudio.microsoft.com/visual-cpp-build-tools/
+✅ Linux (Ubuntu/Debian)
+curl -fsSL https://ollama.com/install.sh | sh
 
-설치 시 다음 구성요소를 반드시 체크:
-"C++ build tools"
-"Windows 10 SDK" 또는 "Windows 11 SDK"
-"CMake tools for Windows"
-설치 후 재부팅 (필요 시)
+설치 확인:
+ollama --version
 
-📥 3. Mistral 모델 다운로드
-프로젝트는 mistral-7b-instruct-v0.1.Q5_K_M.gguf 모델을 사용합니다. Hugging Face에서 수동 다운로드하거나 아래 명령어로 다운로드하세요.
+📥 3. Mistral 모델 다운로드 및 실행
+ollama run mistral
+최초 실행 시 모델이 자동 다운로드됩니다.
+이후에는 로컬에서 빠르게 재사용됩니다.
 
-✅ 자동 다운로드 (wget 사용)
+설치된 모델 목록 확인:
+ollama list
 
-mkdir -p backend/app/models
+모델 삭제:
+ollama remove mistral
 
-wget -O backend/app/models/mistral-7b-instruct-v0.1.Q5_K_M.gguf \
-https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF/resolve/main/mistral-7b-instruct-v0.1.Q5_K_M.gguf
-또는 브라우저에서 직접 다운로드:
-👉 https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF
+🧪 4. 실행 예시 (Python - LangChain 연동)
+from langchain_community.llms import Ollama
+llm = Ollama(model="mistral")  # 설치된 모델명
 
-🧪 4. 실행 예시 (Python)
-from llama_cpp import Llama
-
-llm = Llama(
-    model_path="backend/app/models/mistral-7b-instruct-v0.1.Q5_K_M.gguf",
-    n_ctx=2048,
-    n_gpu_layers=0,  # CPU 환경: 0, GPU 환경: 적절히 조정
-    verbose=True
-)
-
-response = llm("Q: Hello, who are you?\nA:", max_tokens=100)
+response = llm.invoke("Q: Hello, who are you?\nA:")
 print(response)
+LangChain에서 Ollama 클래스를 통해 LLM을 바로 호출할 수 있습니다.
 
+🧠 지원되는 기타 모델들
+모델 이름	실행 명령어
+LLaMA 3	ollama run llama3
+Code Llama	ollama run codellama
+Phi-3	ollama run phi3
+Gemma	ollama run gemma
+Dolphin-mixtral	ollama run dolphin-mixtral
 
-📌 참고
-모델 파일은 4GB 이상이므로 Git에 절대 포함하지 마세요.
-GPU 사용을 위해서는 CUDA가 설치된 환경이 필요합니다.
-로컬 LLM 실행 시 메모리 요구사항이 높을 수 있습니다 (16GB+ 권장).
+📌 참고 사항
+Ollama는 CPU 및 GPU를 자동 감지하여 사용합니다.
+모델 파일은 대용량(4~8GB)이므로 Git에 포함하지 마세요.
+메모리 최소 요구사항: RAM 16GB 이상 권장
+Ollama는 내부적으로 API 서버(localhost:11434)를 실행합니다.
 
 ------------------------------------------------------------------------------
 

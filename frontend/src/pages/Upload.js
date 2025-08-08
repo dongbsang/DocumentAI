@@ -3,7 +3,8 @@ import '../css/Upload.css';
 import { useNavigate } from 'react-router-dom';
 import ProgressBar from '../components/ProgressBar';
 
-const apiUrl = process.env.REACT_APP_API_BASE_URL;
+const apiUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000/api";
+
 
 const Upload = () => {
   const [fileName, setFileName] = useState('');

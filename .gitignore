@@ -29,11 +29,3 @@
 
 # ── 테스트 커버리지
 **/coverage/
-
-# guff 모델 파일
-backend/app/models/*.gguf
-
-# llama-cpp-python 빌드 아티팩트
-backend/llama-cpp-python/build/
-backend/llama-cpp-python/__pycache__/
-backend/llama-cpp-python/*.so
