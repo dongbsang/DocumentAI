@@ -1,15 +1,15 @@
-from enum import Enum
-from pathlib import Path
 import mimetypes
-import filetype
+import fitz  # PyMuPDF
+from enum import Enum
 
 
-# Add an extra blank line to follow PEP 8
 class FileFormat(str, Enum):
-    PDF = "pdf"
+    SEARCHABLE_PDF = "searchable_pdf"
+    SCANNED_PDF = "scanned_pdf"
+    IMAGE = "image"
     HWP = "hwp"
     WORD = "word"
-    IMAGE = "image"
+    UNKNOWN_PDF = "unknown_pdf"
     UNKNOWN = "unknown"
 
 
@@ -25,44 +25,39 @@ _IMAGE_EXTS = {"jpg", "jpeg", "png", "bmp", "tiff", "tif", "gif", "webp"}
 
 def detect_file_format(file_bytes: bytes, filename: str) -> FileFormat:
     """
-    파일의 포맷을 판별해 FileFormat Enum을 반환합니다.
-    - 1차: 확장자 기반
-    - 2차: magic bytes (filetype) 기반
-    - 3차: mimetypes 모듈 기반
+    파일 포맷을 자동 판별하여 FileFormat Enum으로 반환합니다.
+
+    - searchable_pdf: 텍스트 기반 PDF
+    - scanned_pdf: 이미지 기반 PDF
+    - image: PNG, JPG 등 이미지 파일
+    - word: .doc, .docx
+    - hwp: .hwp
+    - unknown_pdf: PDF 열기 실패
+    - unknown: 미지원 포맷
     """
-    ext = Path(filename).suffix.lower().lstrip(".")
+    mime_type, _ = mimetypes.guess_type(filename)
+    ext = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
 
-    # 1) 확장자 기반 우선 판별
-    if ext in _EXT_MAP:
-        return _EXT_MAP[ext]
-    if ext in _IMAGE_EXTS:
-        return FileFormat.IMAGE
-
-    # 2) magic bytes 기반 판별
-    kind = filetype.guess(file_bytes)
-    if kind:
-        mime = kind.mime
-        if mime == "application/pdf":
-            return FileFormat.PDF
-        if "wordprocessingml" in mime or "msword" in mime:
-            return FileFormat.WORD
-        if mime.startswith("image"):
+    try:
+        # PDF
+        if mime_type == "application/pdf" or ext == "pdf":
+            doc = fitz.open(stream=file_bytes, filetype="pdf")
+            has_text = any(page.get_text(strip=True) for page in doc)
+            return FileFormat.SEARCHABLE_PDF if has_text else FileFormat.SCANNED_PDF
+        # 이미지 파일
+        elif (mime_type and mime_type.startswith("image/")) or ext in ["jpg", "jpeg", "png", "bmp", "tiff", "gif"]:
             return FileFormat.IMAGE
-
-    # 3) mimetypes 모듈로 마지막 시도
-    mime, _ = mimetypes.guess_type(filename)
-    if mime:
-        if mime.startswith("image"):
-            return FileFormat.IMAGE
-        if mime == "application/pdf":
-            return FileFormat.PDF
-        if mime in (
-            "application/msword",
-            (
-                "application/vnd.openxmlformats-officedocument."
-                "wordprocessingml.document"
-            ),
-        ):
+        # 한글 문서
+        elif ext == "hwp":
+            return FileFormat.HWP
+        # 워드 문서
+        elif ext in ["doc", "docx"]:
             return FileFormat.WORD
+        # 그 외
+        else:
+            return FileFormat.UNKNOWN
 
-    return FileFormat.UNKNOWN
+    except Exception:
+        if ext == "pdf":
+            return FileFormat.UNKNOWN_PDF
+        return FileFormat.UNKNOWN
