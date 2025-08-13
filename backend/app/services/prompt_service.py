@@ -10,6 +10,8 @@ def load_resume_prompt(category: str, context: str) -> str:
     """
     if category.strip() == "이력서":
         yaml_path = os.path.join("app", "prompt", "resume_info.yaml")
+    elif category.strip() == "영수증":
+        yaml_path = os.path.join("app", "prompt", "receipt_info.yaml")
     else:
         raise ValueError(f"지원되지 않는 카테고리: {category}")
 

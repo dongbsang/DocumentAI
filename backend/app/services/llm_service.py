@@ -1,21 +1,21 @@
-import os
-from langchain_community.llms import LlamaCpp
-from app.services.rag_service import process_uploaded_file
-from app.services.prompt_service import get_prompt_template
-
-model_path = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "models",
-    "mistral-7b-instruct-v0.1.Q5_K_M.gguf"
+from langchain_ollama import OllamaLLM
+from app.services.pdf_service import (
+    extract_text_from_pdf,
+    extract_images_from_pdf,
 )
+from app.services.ocr_service import extract_text_from_image
+from app.services.word_service import convert_docx_to_pdf_bytes
+from app.services.prompt_service import get_prompt_template
+from app.services.text_splitter_service import split_text
+from app.services.vector_store_service import create_vectorstore_from_chunks
+from app.services.upload_service import FileFormat
 
-llm = LlamaCpp(
-    model_path=model_path,
+
+# ✅ Ollama는 model_path 필요 없음
+llm = OllamaLLM(
+    model="mistral",   # 설치된 Ollama 모델 이름
     temperature=0.3,
-    max_tokens=2048,
-    top_p=0.95,
-    n_ctx=32768,  # 모델 최대 context 크기
-    verbose=True  # 디버깅용 로그 출력
+    top_p=0.95
 )
 
 
@@ -27,44 +27,82 @@ def analyze_document(
 ) -> str:
     """
     문서 분석
+    """
+    try:
+        text = ""
+        print({f"file_format= {file_format}, category= {category}, use_handwriting= {use_handwriting}"})
+        # ✅ 1. 포맷 분기 처리
+        if file_format == FileFormat.SEARCHABLE_PDF.value:
+            print("📄 검색 가능한 PDF 문서 감지 → 텍스트 추출 중...")
+            text = extract_text_from_pdf(file_bytes)
+
+        elif file_format == FileFormat.SCANNED_PDF.value:
+            print("📄 스캔된 PDF 문서 감지 → 이미지 추출 후 OCR 중...")
+            images = extract_images_from_pdf(file_bytes)
+            text = "\n".join(extract_text_from_image(img) for img in images)
+            
+        elif file_format == FileFormat.IMAGE.value:
+            print("🖼️ 이미지 파일 감지 → OCR 중...")
+            text = extract_text_from_image(file_bytes)
+
+        elif file_format == FileFormat.WORD.value:
+            print("📄 Word 문서 감지 → PDF 변환 중...")
+            try:
+                pdf_bytes = convert_docx_to_pdf_bytes(file_bytes)
+                
+                print("📄 Word → PDF 변환 완료 → 텍스트 추출 중...")
+                text = extract_text_from_pdf(pdf_bytes)
+            except Exception as e:
+                return {"error": f"Word → PDF 변환 실패: {str(e)}"}
+        elif file_format == FileFormat.HWP.value:
+            # ⚠️ 향후 구현 필요: hwp → pdf 변환 후 다시 분석
+            text = "[해당 문서 유형은 아직 지원되지 않습니다.]"
+            return {"error": text}
+
+        else:
+            return {"error": f"[지원하지 않는 형식] {file_format}"}
+
+        # ✅ 2. 후처리: deduplication
+        text = deduplicate_lines(text)
+
+        if not text.strip():
+            text = "[텍스트를 추출하지 못했습니다.]"
+
+        # ✅ 3. 텍스트 → chunk → vectorstore
+        chunks = split_text(text)
+        retriever = create_vectorstore_from_chunks(chunks).as_retriever()
+
+        prompt = get_prompt_template(
+            context=text,
+            category=category,
+            use_handwriting=use_handwriting
+        )
+
+        print("start---------------------------------------")
+        response = llm.invoke(prompt)
+        print(f"LLM 응답: {response}")
+        print("end---------------------------------------")
+
+        return response
+
+    except Exception as e:
+        return f"❌ 분석 중 오류 발생: {e}"
+
+
+def deduplicate_lines(text: str) -> str:
+    """_summary_
+
     Args:
-        file_bytes (bytes): _description_
-        file_format (str): _description_
-        category (str): _description_
-        use_handwriting (bool, optional): _description_. Defaults to False.
+        text (str): _description_
 
     Returns:
         str: _description_
     """
-
-    try:
-        result = process_uploaded_file(file_bytes, file_format)
-        print(f"전체 텍스트 길이: {len(result['text'])}자")
-
-        # 길이 제한
-        # 텍스트가 없을 경우 기본 메시지 설정
-        if not result["text"]:
-            result["text"] = "[텍스트를 추출하지 못했습니다.]"
-
-        prompt = get_prompt_template(
-            context=result["text"],
-            category=category,
-            use_handwriting=use_handwriting
-        )
-        print(f"프롬프트 길이: {len(prompt)}")
-        print("start---------------------------------------")
-        llm_response = llm.invoke(prompt)
-        print("end---------------------------------------")
-        print(f"응답: {llm_response}")
-        print(f"응답 길이: {len(llm_response)}")
-
-        if isinstance(llm_response, dict) and "choices" in llm_response:
-            answer = llm_response["choices"][0].get("text", "")
-        else:
-            # 혹시 문자열로 바로 오면 그대로
-            answer = str(llm_response)
-
-        return answer.strip()
-
-    except Exception as e:
-        return f"❌ 분석 중 오류 발생: {e}"
+    seen = set()
+    result = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped and stripped not in seen:
+            seen.add(stripped)
+            result.append(stripped)
+    return "\n".join(result)

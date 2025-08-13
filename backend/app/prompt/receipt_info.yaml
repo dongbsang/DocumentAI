@@ -1,0 +1,233 @@
+prompt_name: receipt_info
+
+description: >
+  다양한 형태의 한국어 영수증(카드사 영수증, PG사 영수증, 네이버페이 등 결제내역 화면)을 분석해
+  결제·승인·가맹점·판매자 정보를 구조화합니다. 누락 항목은 "없음"으로 기입합니다.
+
+task_type: information_extraction
+
+template: |
+  당신은 문서/이미지에서 텍스트를 추출·정규화하여 **영수증 표준 JSON**으로 반환하는 시스템입니다.
+  아래 문서 내용을 읽고, 지침을 지켜 **반드시 하나의 JSON만** 출력하세요.
+
+  ---
+  {{context}}
+  ---
+
+  [지침]
+  1) 우선순위 매핑
+     - 금액: "합계/총 결제금액/승인금액/금액" 중 가장 포괄적인 금액을 amount_total로.
+     - 공급가액/부가세/봉사료가 보이면 각각 amount_supply/amount_vat/service_fee에.
+     - 결제 구분이 "할부(3개월)"이면 payment_method="할부", installment_months=3.
+       "일시불"이면 payment_method="일시불", installment_months=0.
+     - 승인번호/카드사승인번호/거래승인번호 등은 approval_number.
+     - 승인상태(정상/취소/부분취소 등)는 approval_status.
+     - 결제일시는 YYYY-MM-DD HH:MM:SS(24h)로 정규화. (예: 23. 10. 27 · 23:48:00 → 2023-10-27 23:48:00)
+     - 통화는 KRW 고정. 숫자는 쉼표 제거 후 정수(원 단위)로.
+  2) 주체 구분
+     - pg_provider: KCP, NHN KCP, 네이버페이, 토스페이먼츠 등 결제대행사/지급결제 주체.
+     - merchant_*: 실제 결제 창에 표시된 가맹점(네이버파이낸셜 등 PG 가맹점일 수 있음).
+     - seller_*: 실상품 판매자(표시 시). 카드영수증에 "판매자 정보"가 따로 있으면 seller_*에 기록.
+  3) 카드 정보
+     - card_brand/company: 예) 현대카드, KB국민카드 등. 화면에 "네이버 현대카드"라면
+       card_brand="현대카드", card_company_display="네이버 현대카드".
+     - card_number_masked는 별표 포함 그대로. 없으면 "없음".
+     - card_holder_type: 본인/가족/없음.
+  4) 주소/번호
+     - 사업자등록번호는 숫자만(하이픈 제거).
+     - 전화번호는 원문 그대로.
+     - 가맹점번호가 보이면 merchant_id에.
+  5) 품목
+     - 상품명/주문번호/거래ID가 보이면 product_name, order_number, transaction_id에.
+     - 품목 목록이 없으면 items는 빈 배열 [].
+  6) 불확실하면 "없음"으로 기록하고, note에 근거를 짧게 남기세요.
+  7) **반드시 아래 JSON 스키마**로만 출력하세요. 코드블록 없이 JSON만.
+
+  [출력 JSON 스키마]
+  {
+    "transaction_datetime": "YYYY-MM-DD HH:MM:SS",
+    "currency": "KRW",
+    "amount_total": 0,
+    "amount_supply": 0,
+    "amount_vat": 0,
+    "service_fee": 0,
+
+    "payment_method": "일시불|할부|없음",
+    "installment_months": 0,
+
+    "approval_number": "string",
+    "approval_status": "정상|취소|부분취소|없음",
+
+    "card_brand": "string",
+    "card_company_display": "string",
+    "card_number_masked": "string",
+    "card_holder_type": "본인|가족|없음",
+
+    "pg_provider": "string",
+    "transaction_type": "신용(개인)|체크|법인|없음",
+
+    "merchant_name": "string",
+    "merchant_representative": "string",
+    "merchant_business_id": "string",
+    "merchant_id": "string",
+    "merchant_address": "string",
+    "merchant_tel": "string",
+    "merchant_category": "string",
+
+    "seller_name": "string",
+    "seller_business_id": "string",
+    "seller_tel": "string",
+    "seller_address": "string",
+
+    "product_name": "string",
+    "order_number": "string",
+    "transaction_id": "string",
+
+    "items": [
+      {
+        "name": "string",
+        "qty": 0,
+        "unit_price": 0,
+        "line_total": 0,
+        "vat_included": true
+      }
+    ],
+
+    "source_hint": "KCP화면|네이버페이화면|카드사영수증|기타",
+    "note": "string"
+  }
+
+  [샘플 1: KCP 결제 화면(할부 3개월)]
+  입력 단서(요약):
+    - 금액 350,000원 / 부가세 0원 / 봉사료 0원
+    - 거래일자: 23. 10. 27 · 23:48:00
+    - 결제 구분: 할부(3개월), 결제 카드: 네이버 현대카드, 카드 소지자: 본인
+    - 승인번호: 00169849, 승인상태: 정상
+    - 주소(가맹점 상세): 서울 구로구 디지털로26길 72 (구로동, NHNKCP)
+      가맹점번호 150252705 / 대표자명 박준석 / 사업자등록번호 1138521083 / 업종 PG쇼핑몰
+  기대 JSON(요지):
+  {
+    "transaction_datetime": "2023-10-27 23:48:00",
+    "currency": "KRW",
+    "amount_total": 350000,
+    "amount_supply": 0,
+    "amount_vat": 0,
+    "service_fee": 0,
+    "payment_method": "할부",
+    "installment_months": 3,
+    "approval_number": "00169849",
+    "approval_status": "정상",
+    "card_brand": "현대카드",
+    "card_company_display": "네이버 현대카드",
+    "card_number_masked": "없음",
+    "card_holder_type": "본인",
+    "pg_provider": "KCP",
+    "transaction_type": "없음",
+    "merchant_name": "NHNKCP",
+    "merchant_representative": "박준석",
+    "merchant_business_id": "1138521083",
+    "merchant_id": "150252705",
+    "merchant_address": "서울 구로구 디지털로26길 72 (구로동, NHNKCP)",
+    "merchant_tel": "02-1544-8667",
+    "merchant_category": "PG쇼핑몰",
+    "seller_name": "없음",
+    "seller_business_id": "없음",
+    "seller_tel": "없음",
+    "seller_address": "없음",
+    "product_name": "없음",
+    "order_number": "없음",
+    "transaction_id": "없음",
+    "items": [],
+    "source_hint": "KCP화면",
+    "note": "KCP 가맹점 정보 기준으로 매핑"
+  }
+
+  [샘플 2: 카드사 영수증(네이버페이 결제, 일시불)]
+  입력 단서(요약):
+    - 카드사승인번호 현대 / 00961136
+    - 결제일자 2024-10-02 16:53:42, 거래유형 신용(개인)/일시불
+    - 상품명 STAY3, 주문번호 PD2024100249233230
+    - 판매자 정보: 리르스테이(사업자 3570601794, 주소 인천광역시 강화군…, 전화 010-5494-5699)
+    - 가맹점 정보: 네이버파이낸셜 주식회사(사업자 5248601528, 주소 경기도 성남시 분당구 정자일로 95)
+    - 금액: 승인금액 464,718 / 공급가액 422,471 / 부가세 42,247
+  기대 JSON(요지):
+  {
+    "transaction_datetime": "2024-10-02 16:53:42",
+    "currency": "KRW",
+    "amount_total": 464718,
+    "amount_supply": 422471,
+    "amount_vat": 42247,
+    "service_fee": 0,
+    "payment_method": "일시불",
+    "installment_months": 0,
+    "approval_number": "00961136",
+    "approval_status": "정상",
+    "card_brand": "현대카드",
+    "card_company_display": "현대카드",
+    "card_number_masked": "****-****-****-****",
+    "card_holder_type": "없음",
+    "pg_provider": "네이버페이",
+    "transaction_type": "신용(개인)",
+    "merchant_name": "네이버파이낸셜 주식회사",
+    "merchant_representative": "박상진",
+    "merchant_business_id": "5248601528",
+    "merchant_id": "1350*****",
+    "merchant_address": "경기도 성남시 분당구 정자일로 95, NA VER 1784",
+    "merchant_tel": "없음",
+    "merchant_category": "온라인쇼핑몰",
+    "seller_name": "리르스테이",
+    "seller_business_id": "3570601794",
+    "seller_tel": "010-5494-5699",
+    "seller_address": "인천광역시 강화군 삼산면 삼산동로 29-15 리르스테이",
+    "product_name": "STAY3",
+    "order_number": "PD2024100249233230",
+    "transaction_id": "없음",
+    "items": [],
+    "source_hint": "카드사영수증",
+    "note": "판매자/가맹점 분리 기재"
+  }
+
+  [샘플 3: 네이버페이 결제내역 화면(일시불)]
+  입력 단서(요약):
+    - 금액 464,718원 / 부가세 0원 표기 / 봉사료 0원
+    - 거래 일자 24. 10. 2 · 16:53:42 (→ 2024-10-02 16:53:42)
+    - 결제 구분 일시불, 결제 카드 네이버 현대카드, 카드 소지자 본인
+    - 승인번호 00961136, 승인상태 정상
+    - 가맹점 상세: 경기도 성남시 분당구 정자일로 95 (정자동, 네이버1784)
+      가맹점번호 135004725 / 대표자명 박상진 / 사업자등록번호 5248601528 / 업종 온라인쇼핑몰
+  기대 JSON(요지):
+  {
+    "transaction_datetime": "2024-10-02 16:53:42",
+    "currency": "KRW",
+    "amount_total": 464718,
+    "amount_supply": 0,
+    "amount_vat": 0,
+    "service_fee": 0,
+    "payment_method": "일시불",
+    "installment_months": 0,
+    "approval_number": "00961136",
+    "approval_status": "정상",
+    "card_brand": "현대카드",
+    "card_company_display": "네이버 현대카드",
+    "card_number_masked": "없음",
+    "card_holder_type": "본인",
+    "pg_provider": "네이버페이",
+    "transaction_type": "없음",
+    "merchant_name": "네이버파이낸셜 주식회사",
+    "merchant_representative": "박상진",
+    "merchant_business_id": "5248601528",
+    "merchant_id": "135004725",
+    "merchant_address": "경기도 성남시 분당구 정자일로 95 (정자동, 네이버1784)",
+    "merchant_tel": "031-158-8381",
+    "merchant_category": "온라인쇼핑몰",
+    "seller_name": "없음",
+    "seller_business_id": "없음",
+    "seller_tel": "없음",
+    "seller_address": "없음",
+    "product_name": "없음",
+    "order_number": "없음",
+    "transaction_id": "없음",
+    "items": [],
+    "source_hint": "네이버페이화면",
+    "note": "네이버페이 자체 화면 기준"
+  }

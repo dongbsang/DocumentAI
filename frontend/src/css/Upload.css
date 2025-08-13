@@ -93,5 +93,5 @@
   background-color: rgba(255, 255, 255, 0.5);
   z-index: 999;
   pointer-events: all;
-  cursor: not-allowed;
+  cursor: default;
 }

@@ -1,7 +1,7 @@
 import json
 import mimetypes
-
 import fitz
+
 
 def detect_file_format(file_bytes: bytes, filename: str) -> str:
     """
@@ -14,7 +14,7 @@ def detect_file_format(file_bytes: bytes, filename: str) -> str:
       - image: 일반 이미지 파일 (PNG, JPEG 등)
       - unknown_pdf: PDF이지만 분석 실패
       - unknown: 위 분류에 속하지 않는 파일
-   
+
     Args:
         file_bytes (bytes): 업로드된 파일의 바이트 스트림
         filename (str): 원본 파일명 (확장자 검사용)
@@ -39,7 +39,6 @@ def detect_file_format(file_bytes: bytes, filename: str) -> str:
             pages = doc.page_count
         except Exception:
             format_type = "unknown_pdf"
-
     # 이미지 파일 처리
     elif (mime_type and mime_type.startswith("image/")) or ext in [
         "jpg",
