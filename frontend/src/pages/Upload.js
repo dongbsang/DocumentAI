@@ -3,8 +3,7 @@ import '../css/Upload.css';
 import { useNavigate } from 'react-router-dom';
 import ProgressBar from '../components/ProgressBar';
 
-const apiUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000/api";
-
+const apiUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
 
 const Upload = () => {
   const [fileName, setFileName] = useState('');
@@ -17,7 +16,7 @@ const Upload = () => {
   const navigate = useNavigate();
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) {
       alert('파일을 선택해주세요.');
       return;
@@ -37,35 +36,55 @@ const Upload = () => {
     try {
       setLoading(true);
       setProgressStep(1); // 1단계: 분석 시작
-
       setProgressStep(2); // 2단계: 분석 중
+
       const response = await fetch(`${apiUrl}/upload`, {
         method: 'POST',
         body: formData,
+        // FormData를 쓸 때는 Content-Type 자동 설정되므로 헤더 넣지 말 것!
       });
 
+      // 응답 바디를 먼저 파싱
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        // JSON 파싱 자체가 실패하는 경우
+        throw new Error(`서버 응답 파싱 실패 (${response.status})`);
+      }
 
-      if (!response.ok) throw new Error(response.statusText);
+      // 상태코드 에러 or 서버가 { error: "..."} 반환한 경우
+      if (!response.ok || result?.error) {
+        const msg = result?.error || `업로드 실패 (${response.status})`;
+        throw new Error(msg);
+      }
 
-      const result = await response.json();
       setProgressStep(3); // 3단계: 완료!
 
-      sessionStorage.setItem('analysisResult', JSON.stringify({
-        filename: result.filename,
-        summary: result.summary,
-        info: result.info,
-      }));
+      // 문자열 렌더링 보장 (React에서 객체를 바로 렌더링하면 에러)
+      const safeSummary =
+        typeof result.summary === 'string'
+          ? result.summary
+          : JSON.stringify(result.summary ?? '', null, 2);
 
-      navigate('/result', {
-        state: {
-          filename: result.filename,
-          summary: result.summary,
-          info: result.info,
-        },
-      });
+      const safeInfo =
+        typeof result.info === 'string'
+          ? result.info
+          : JSON.stringify(result.info ?? '', null, 2);
+
+      // 세션 저장
+      const payload = {
+        filename: result.filename ?? fileName ?? '',
+        summary: safeSummary,
+        info: safeInfo,
+      };
+      sessionStorage.setItem('analysisResult', JSON.stringify(payload));
+
+      // 페이지 이동
+      navigate('/result', { state: payload });
     } catch (err) {
       console.error('분석 중 오류:', err);
-      alert('분석 중 오류가 발생했습니다.');
+      alert(err?.message || '분석 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -78,10 +97,7 @@ const Upload = () => {
 
       <div className="category-section">
         <label>문서 카테고리:</label>
-        <select
-          value={category}
-          onChange={e => setCategory(e.target.value)}
-        >
+        <select value={category} onChange={e => setCategory(e.target.value)}>
           <option value="이력서">이력서</option>
           <option value="영수증">영수증</option>
           <option value="etc">기타</option>
@@ -120,7 +136,7 @@ const Upload = () => {
       </button>
 
       {loading && <ProgressBar step={progressStep} />}
-      {loading && <div className="overlay" />} {/* ✅ 전체 잠금 오버레이 */}
+      {loading && <div className="overlay" />}
     </div>
   );
 };
