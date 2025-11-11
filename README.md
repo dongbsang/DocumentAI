@@ -1,5 +1,17 @@
-### 구조설계
+# DocumentAI
 
+문서 AI 파이프라인 - PDF, 이미지, Word 문서를 자동으로 분석하는 풀스택 애플리케이션
+
+## 📚 문서 가이드
+- 🚀 **빠르게 시작하기**: [QUICKSTART.md](./QUICKSTART.md) - 5분 안에 실행
+- 🔧 **백엔드 상세**: [backend/README.md](./backend/README.md) - API 및 서비스 구조
+- 🎨 **프론트엔드 상세**: [frontend/README.md](./frontend/README.md) - UI 컴포넌트 및 구조
+
+---
+
+## 🏗️ 구조 설계
+
+```
 [사용자 체크박스: "손글씨 인식"] ✅ 또는 ❌
               │
               ▼
@@ -13,120 +25,314 @@
     정확함)         인식 가능)
         │           │
         └─────→ 후처리 및 결과 출력
+```
 
-------------------------------------------------------------------------------------------------------------------------
+---
 
-### 최초 해야하는 것
- .env.example 파일을 복사해서 .env 파일로 만듭니다
-  1) cp .env.example .env
-  2) .env 에서 필요한 환경변수를 정의합니다
-  3) 보안을 위해 민감정보는 .env 에만 저장
-  4) (추후) OPENAI_API_KEY 제거 예정
+## 🔧 초기 설정
 
-------------------------------------------------------------------------------------------------------------------------
+### 1. 환경 변수 설정
+`.env.example` 파일을 복사해서 `.env` 파일로 만듭니다.
 
-## 🚀 개발 환경(환경 구성) 설정
-프로젝트를 실행하기 전에 독립된 Python 환경을 만들고, 필요한 패키지를 한 번에 설치하세요.
-### 1. 가상환경 생성하기
+```bash
+# Windows
+copy .env.example backend\.env
+
+# macOS/Linux
+cp .env.example backend/.env
+```
+
+`.env` 파일을 열어 필요한 환경변수를 정의합니다:
+```env
+FLASK_APP=app.main
+FLASK_ENV=development
+```
+
+⚠️ **주의**: `.env` 파일은 Git에 커밋되지 않습니다 (보안을 위해 `.gitignore`에 등록됨)
+
+---
+
+## 📦 설치 가이드
+
+### Step 1: Python 가상환경 설정
+
+```bash
+# 1. backend 디렉토리로 이동
 cd backend
+
+# 2. 가상환경 생성
 python -m venv .venv
-### 2. 가상환경 활성화
+
+# 3. 가상환경 활성화
+# Windows PowerShell
 .\.venv\Scripts\Activate.ps1
-### 3. 필수 라이브러리 설치하기
+
+# Windows CMD
+.\.venv\Scripts\activate.bat
+
+# macOS/Linux
+source .venv/bin/activate
+
+# 4. Python 패키지 설치
 pip install -r requirements.txt
-1) flask 사용 시 import flask 오류 없이 동작
-2) openai 클라이언트 사용 시 import openai 오류 없이 동작
-### 4. 가상환경 나가기
-deactivate
 
-------------------------------------------------------------------------------------------------------------------------
+# 5. 프로젝트 루트로 돌아가기
+cd ..
+```
 
-🧠 LLM 모델 및 Ollama 설치 가이드
-이 프로젝트는 문서 AI 파이프라인에서 로컬 LLM(Mistral-7B) 모델을 실행하기 위해 Ollama를 사용합니다.
-Ollama는 간편하게 로컬 LLM을 다운로드 및 실행할 수 있는 통합 플랫폼입니다.
+### Step 2: Node.js 패키지 설치
 
-아래 절차에 따라 환경을 세팅해 주세요.
+```bash
+# 프론트엔드 디렉토리로 이동
+cd frontend
 
-📦 1. Python 환경 설정
-Python 3.10+ 이상이 권장됩니다.
+# Node.js 패키지 설치
+npm install
 
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install --upgrade pip
+# 프로젝트 루트로 돌아가기
+cd ..
+```
 
-🔧 2. Ollama 설치
-운영체제에 따라 아래 방식으로 설치합니다:
+### Step 3: Ollama 설치 및 모델 다운로드
 
-✅ Windows
-아래 링크에서 .msi 설치 파일 다운로드
-👉 https://ollama.com/download
-실행 후 설치 및 재부팅
+이 프로젝트는 로컬 LLM(Mistral-7B)을 실행하기 위해 **Ollama**를 사용합니다.
 
-✅ macOS
+#### Windows
+1. [Ollama 다운로드 페이지](https://ollama.com/download)에서 `.msi` 파일 다운로드
+2. 설치 후 재부팅
+
+#### macOS
+```bash
 brew install ollama
+```
 
-✅ Linux (Ubuntu/Debian)
+#### Linux (Ubuntu/Debian)
+```bash
 curl -fsSL https://ollama.com/install.sh | sh
+```
 
-설치 확인:
+#### 설치 확인
+```bash
 ollama --version
+```
 
-📥 3. Mistral 모델 다운로드 및 실행
+#### Mistral 모델 다운로드
+```bash
+# 모델 다운로드 및 실행 (최초 1회)
 ollama run mistral
-최초 실행 시 모델이 자동 다운로드됩니다.
-이후에는 로컬에서 빠르게 재사용됩니다.
 
-설치된 모델 목록 확인:
+# 설치된 모델 목록 확인
+ollama list
+```
+
+**📌 참고 사항**
+- Python 3.10+ 권장
+- Node.js 16+ 권장
+- RAM 16GB 이상 권장
+- Ollama는 내부적으로 API 서버(`localhost:11434`)를 실행합니다
+- 모델 파일은 대용량(4~8GB)이므로 Git에 포함하지 마세요
+
+---
+
+## 🚀 실행 방법
+
+### ⭐ 권장 방법: 개별 실행 (2개 터미널)
+
+#### 터미널 1: Backend 실행
+
+```bash
+# 1. backend 디렉토리로 이동
+cd backend
+
+# 2. 가상환경 활성화
+.\.venv\Scripts\Activate.ps1  # Windows PowerShell
+# .\.venv\Scripts\activate.bat  # Windows CMD
+# source .venv/bin/activate      # macOS/Linux
+
+# 3. Flask 서버 실행
+flask run
+```
+
+✅ Backend 실행 확인: `http://localhost:5000`
+
+---
+
+#### 터미널 2: Frontend 실행 (새 터미널 열기)
+
+```bash
+# 1. frontend 디렉토리로 이동
+cd frontend
+
+# 2. React 개발 서버 실행
+npm start
+```
+
+✅ Frontend 실행 확인: `http://localhost:3000` (자동으로 브라우저 열림)
+
+---
+
+### 방법 2: 한 번에 실행 (concurrently 사용)
+
+**프로젝트 루트**에서 다음 명령어 실행:
+
+```bash
+# 먼저 concurrently 설치 (최초 1회만)
+npm install
+
+# 백엔드 + 프론트엔드 동시 실행
+npm start
+```
+
+이 명령어는 다음을 자동으로 실행합니다:
+- ✅ Backend (Flask): `http://localhost:5000`
+- ✅ Frontend (React): `http://localhost:3000`
+
+터미널 출력 예시:
+```
+[BACKEND] * Running on http://127.0.0.1:5000
+[FRONTEND] webpack compiled successfully
+```
+
+**⚠️ 주의**: 이 방법은 백엔드 가상환경이 미리 활성화되어 있어야 합니다.
+
+---
+
+### 방법 3: 컬러 출력으로 실행 (디버깅용)
+
+```bash
+npm run dev
+```
+
+백엔드는 파란색, 프론트엔드는 초록색으로 구분되어 출력됩니다.
+
+---
+
+## 🛑 종료 방법
+
+### 개별 실행 종료
+각 터미널에서 `Ctrl + C`
+
+### 동시 실행 종료
+`Ctrl + C` 두 번 (백엔드와 프론트엔드 모두 종료)
+
+---
+
+## 🛠️ 추가 명령어
+
+```bash
+# 백엔드만 실행 (루트에서)
+npm run start:backend
+
+# 프론트엔드만 실행 (루트에서)
+npm run start:frontend
+
+# 모든 의존성 한 번에 설치
+npm run install:all
+```
+
+---
+
+## 🧠 지원되는 기타 LLM 모델
+
+| 모델 이름 | 실행 명령어 |
+|-----------|-------------|
+| LLaMA 3 | `ollama run llama3` |
+| Code Llama | `ollama run codellama` |
+| Phi-3 | `ollama run phi3` |
+| Gemma | `ollama run gemma` |
+| Dolphin-mixtral | `ollama run dolphin-mixtral` |
+
+---
+
+## 📝 프로젝트 구조
+
+```
+DocumentAI/
+├── backend/              # Flask API 서버
+│   ├── app/
+│   │   ├── main.py      # 진입점
+│   │   ├── routers/     # API 라우트
+│   │   ├── services/    # 비즈니스 로직
+│   │   └── prompt/      # LLM 프롬프트 템플릿
+│   ├── .venv/           # Python 가상환경 (Git 제외)
+│   ├── .env             # 환경 변수 (Git 제외)
+│   └── requirements.txt
+├── frontend/            # React 웹 애플리케이션
+│   ├── src/
+│   ├── node_modules/    # Node.js 패키지 (Git 제외)
+│   └── package.json
+├── package.json         # 루트 설정 (동시 실행용)
+├── QUICKSTART.md        # 빠른 시작 가이드
+└── README.md            # 이 문서
+```
+
+---
+
+## ❓ 문제 해결
+
+### Flask 서버가 시작되지 않는 경우
+```bash
+# 가상환경이 활성화되어 있는지 확인
+# 터미널 앞에 (.venv) 표시가 있어야 함
+
+# 환경 변수 확인
+echo $FLASK_APP  # macOS/Linux
+echo %FLASK_APP%  # Windows CMD
+
+# 수동으로 설정
+export FLASK_APP=app.main  # macOS/Linux
+set FLASK_APP=app.main     # Windows
+```
+
+### 포트 충돌 발생 시
+```bash
+# 5000번 포트를 사용 중인 프로세스 확인
+# Windows
+netstat -ano | findstr :5000
+
+# macOS/Linux
+lsof -i :5000
+
+# 3000번 포트를 사용 중인 프로세스 확인
+# Windows
+netstat -ano | findstr :3000
+
+# macOS/Linux
+lsof -i :3000
+```
+
+### Ollama 연결 실패
+```bash
+# Ollama 서비스 확인
 ollama list
 
-모델 삭제:
-ollama remove mistral
+# Mistral 모델 재다운로드
+ollama pull mistral
 
-🧪 4. 실행 예시 (Python - LangChain 연동)
-from langchain_community.llms import Ollama
-llm = Ollama(model="mistral")  # 설치된 모델명
+# Ollama 서버 재시작
+# Windows: Ollama 앱 재실행
+# macOS/Linux: ollama serve
+```
 
-response = llm.invoke("Q: Hello, who are you?\nA:")
-print(response)
-LangChain에서 Ollama 클래스를 통해 LLM을 바로 호출할 수 있습니다.
+### Python 가상환경 활성화 실패 (Windows PowerShell)
+```powershell
+# 실행 정책 오류 시
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
 
-🧠 지원되는 기타 모델들
-모델 이름	실행 명령어
-LLaMA 3	ollama run llama3
-Code Llama	ollama run codellama
-Phi-3	ollama run phi3
-Gemma	ollama run gemma
-Dolphin-mixtral	ollama run dolphin-mixtral
+---
 
-📌 참고 사항
-Ollama는 CPU 및 GPU를 자동 감지하여 사용합니다.
-모델 파일은 대용량(4~8GB)이므로 Git에 포함하지 마세요.
-메모리 최소 요구사항: RAM 16GB 이상 권장
-Ollama는 내부적으로 API 서버(localhost:11434)를 실행합니다.
+## 🎯 주요 기능
 
-------------------------------------------------------------------------------
+- ✅ PDF 문서 분석 (검색 가능/스캔 문서)
+- ✅ 이미지 OCR (Tesseract/EasyOCR)
+- ✅ Word 문서 변환 및 분석
+- ✅ 손글씨 인식 지원
+- ✅ 로컬 LLM 기반 문서 요약
+- ✅ 카테고리별 프롬프트 템플릿
 
-### 실행방법
-✅ 3단계: 동시 실행 (선택사항)
-두 개를 한 번에 실행하고 싶다면 다음 중 하나를 선택할 수 있어요:
------------------------------------
-방법 A: VS Code에서 두 개의 터미널로 실행
-하나는 backend에서 flask run
+---
 
-하나는 frontend에서 npm start
------------------------------------
-방법 B: start-all.sh (bash 스크립트, WSL 또는 Git Bash에서만 가능)
-bash
+## 📄 라이선스
 
-'샵'!/bin/bash
-(최초만) python -m venv .venv
-.venv/Scripts/activate
-cd backend
-set FLASK_APP=app.py
-set FLASK_ENV=development  // 자동 리로드 + 디버그 모드
-flask run
-cd ../frontend
-npm start
-----------------------------------
-
-
+MIT License

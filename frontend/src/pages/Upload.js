@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import '../css/Upload.css';
 import { useNavigate } from 'react-router-dom';
 import ProgressBar from '../components/ProgressBar';
-
-const apiUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+import { uploadFile } from '../api';
 
 const Upload = () => {
   const [fileName, setFileName] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [category, setCategory] = useState('이력서');
+  const [category, setCategory] = useState('resume');
   const [useHandwriting, setUseHandwriting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
@@ -28,40 +27,17 @@ const Upload = () => {
   const handleResultClick = async () => {
     if (!selectedFile) return alert('파일을 선택해주세요.');
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('category', category);
-    formData.append('use_handwriting', useHandwriting);
-
     try {
       setLoading(true);
       setProgressStep(1); // 1단계: 분석 시작
       setProgressStep(2); // 2단계: 분석 중
 
-      const response = await fetch(`${apiUrl}/upload`, {
-        method: 'POST',
-        body: formData,
-        // FormData를 쓸 때는 Content-Type 자동 설정되므로 헤더 넣지 말 것!
-      });
-
-      // 응답 바디를 먼저 파싱
-      let result;
-      try {
-        result = await response.json();
-      } catch {
-        // JSON 파싱 자체가 실패하는 경우
-        throw new Error(`서버 응답 파싱 실패 (${response.status})`);
-      }
-
-      // 상태코드 에러 or 서버가 { error: "..."} 반환한 경우
-      if (!response.ok || result?.error) {
-        const msg = result?.error || `업로드 실패 (${response.status})`;
-        throw new Error(msg);
-      }
+      // api.js의 uploadFile 함수 사용
+      const result = await uploadFile(selectedFile, category, useHandwriting);
 
       setProgressStep(3); // 3단계: 완료!
 
-      // 문자열 렌더링 보장 (React에서 객체를 바로 렌더링하면 에러)
+      // 문자열 렌더링 보장
       const safeSummary =
         typeof result.summary === 'string'
           ? result.summary
@@ -85,6 +61,7 @@ const Upload = () => {
     } catch (err) {
       console.error('분석 중 오류:', err);
       alert(err?.message || '분석 중 오류가 발생했습니다.');
+      setProgressStep(0);
     } finally {
       setLoading(false);
     }
@@ -98,8 +75,9 @@ const Upload = () => {
       <div className="category-section">
         <label>문서 카테고리:</label>
         <select value={category} onChange={e => setCategory(e.target.value)}>
-          <option value="이력서">이력서</option>
-          <option value="영수증">영수증</option>
+          <option value="resume">이력서</option>
+          <option value="receipt">영수증</option>
+          <option value="diagnosis">진단서</option>
           <option value="etc">기타</option>
         </select>
       </div>
@@ -118,7 +96,7 @@ const Upload = () => {
       <label className="upload-box">
         <input
           type="file"
-          accept="image/*,application/pdf"
+          accept="image/*,application/pdf,.doc,.docx"
           onChange={handleFileChange}
           className="file-input"
         />

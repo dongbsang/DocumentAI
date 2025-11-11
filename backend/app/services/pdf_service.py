@@ -1,5 +1,5 @@
 import pdfplumber
-import fitz  # PyMuPDF
+import fitz
 from io import BytesIO
 
 

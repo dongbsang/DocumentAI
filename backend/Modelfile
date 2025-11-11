@@ -1,0 +1,9 @@
+FROM mistral:7b-instruct-q4_0
+
+# CPU 전용 설정
+PARAMETER num_gpu 0
+PARAMETER num_thread 8
+
+# 기본 파라미터
+PARAMETER temperature 0.3
+PARAMETER top_p 0.95

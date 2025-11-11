@@ -2,6 +2,7 @@ import mimetypes
 import fitz  # PyMuPDF
 from enum import Enum
 
+
 class FileFormat(str, Enum):
     SEARCHABLE_PDF = "searchable_pdf"
     SCANNED_PDF = "scanned_pdf"
@@ -11,7 +12,9 @@ class FileFormat(str, Enum):
     UNKNOWN_PDF = "unknown_pdf"
     UNKNOWN = "unknown"
 
+
 _IMAGE_EXTS = {"jpg", "jpeg", "png", "bmp", "tiff", "tif", "gif", "webp"}
+
 
 def detect_file_format(file_bytes: bytes, filename: str) -> FileFormat:
     mime_type, _ = mimetypes.guess_type(filename)

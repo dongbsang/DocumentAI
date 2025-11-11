@@ -1,8 +1,6 @@
-import os
 import time
 import shutil
-import tempfile, shlex, subprocess
-from pathlib import Path
+import tempfile
 from pathlib import Path
 from docx2pdf import convert
 

@@ -1,5 +1,19 @@
 from typing import List
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+# langchain 최신 버전에서는 text_splitter가 별도 패키지로 분리됨
+try:
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    print("✅ langchain_text_splitters에서 import 성공")
+except ImportError:
+    # 구버전 호환성
+    try:
+        from langchain.text_splitter import RecursiveCharacterTextSplitter
+        print("✅ langchain.text_splitter에서 import 성공 (구버전)")
+    except ImportError:
+        raise ImportError(
+            "TextSplitter를 import할 수 없습니다.\n"
+            "다음 명령어로 설치하세요: pip install langchain-text-splitters"
+        )
 
 
 def split_text(
