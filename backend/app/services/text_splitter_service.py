@@ -8,7 +8,7 @@ except ImportError:
     # 구버전 호환성
     try:
         from langchain.text_splitter import RecursiveCharacterTextSplitter
-        print("✅ langchain.text_splitter에서 import 성공 (구버전)")
+        print("✅ langchain.text_splitter에서 import 성공")
     except ImportError:
         raise ImportError(
             "TextSplitter를 import할 수 없습니다.\n"

@@ -1,70 +1,146 @@
 prompt_name: resume_info
 
 description: >
-  아래 이력서 내용을 분석하여 항목별로 정보를 구조화해 주세요.
-  항목이 없을 경우에는 "없음"이라고 명시해주세요.
+  이력서 내용을 분석하여 지원자 정보, 학력, 경력, 기술 스택 등을 구조화합니다.
 
 task_type: information_extraction
 
+# 출력 스키마 정의
+output_schema:
+  type: "structured_json"
+  description: "이력서 정보를 구조화된 JSON으로 반환"
+  
+  structure:
+    summary:
+      title: "지원자 이름"
+      subtitle: "주요 경력 요약"
+      datetime: "작성일"
+      description: "핵심 역량"
+      status:
+        label: "경력 년수"
+        type: "info"
+    
+    details:
+      personal:
+        name: "이름"
+        birth_date: "생년월일"
+        email: "이메일"
+        phone: "전화번호"
+        address: "거주지"
+      
+      education:
+        type: "array"
+        description: "학력 정보"
+      
+      experience:
+        type: "array"
+        description: "경력 정보"
+      
+      skills:
+        type: "array"
+        description: "보유 기술"
+      
+      certifications:
+        type: "array"
+        description: "자격증"
+
 template: |
-  다음은 한 명의 이력서입니다. 내용을 읽고 아래의 형식에 맞게 필요한 정보를 추출해 주세요.
-  항목이 누락되어 있다면 "없음"이라고 기입해주세요.
+  당신은 이력서를 분석하여 **구조화된 JSON**으로 반환하는 시스템입니다.
+  아래 이력서 내용을 읽고 JSON 형식으로만 출력하세요.
 
   ---
   {{context}}
   ---
 
-  아래 형식에 맞춰 정보를 추출해주세요
-  - 모든 항목을 반드시 채워주세요. 누락된 항목은 '없음'이라고 써 주세요.
-  - (복수일 경우 여러 개 작성)이라고 명시된 항목은 여러 개의 정보를 입력할 수 있습니다.
-  - (복수일 경우 여러 개 작성)이라고 명시되어있는 TEXT 그 자체는 결과물에 보여주지 않습니다.
-  - 각 항목은 '-'로 시작하며, 항목명과 내용은 ':'로 구분합니다.
-  
+  [중요 규칙]
+  1. 반드시 JSON 스키마 형식으로만 응답
+  2. ```json``` 마크다운 사용 금지
+  3. 날짜는 YYYY-MM-DD 또는 YYYY-MM 형식
+  4. 정보가 없으면 null
+  5. 배열은 빈 배열 [] 가능
 
-  [이력서 정보]
-  
-  이름:
-  생년월일:
-  거주지:
+  [출력 JSON 스키마]
+  {
+    "summary": {
+      "title": "홍길동",
+      "subtitle": "5년차 백엔드 개발자",
+      "datetime": null,
+      "description": "Java, Spring, AWS 전문 백엔드 엔지니어",
+      "status": {
+        "label": "경력 5년",
+        "type": "info"
+      }
+    },
+    "details": {
+      "personal": {
+        "name": "홍길동",
+        "birth_date": "1990-01-01",
+        "email": "hong@example.com",
+        "phone": "010-1234-5678",
+        "address": "서울특별시 강남구"
+      },
+      "education": [
+        {
+          "school": "한국대학교",
+          "major": "컴퓨터공학",
+          "degree": "학사",
+          "admission_year": "2008",
+          "graduation_year": "2012",
+          "status": "졸업"
+        }
+      ],
+      "experience": [
+        {
+          "company": "ABC 주식회사",
+          "position": "백엔드 개발자",
+          "start_date": "2019-01",
+          "end_date": "현재",
+          "description": "Java/Spring 기반 백엔드 시스템 개발",
+          "projects": ["전자상거래 플랫폼", "결제 시스템"],
+          "tech_stack": ["Java", "Spring Boot", "MySQL", "AWS"]
+        }
+      ],
+      "skills": ["Java", "Spring", "MySQL", "AWS", "Docker"],
+      "certifications": [
+        {
+          "name": "정보처리기사",
+          "issuer": "한국산업인력공단",
+          "date": "2018-08-17"
+        }
+      ],
+      "languages": [
+        {
+          "name": "영어",
+          "level": "TOEIC 900"
+        }
+      ]
+    },
+    "meta": {
+      "total_career_years": 5,
+      "job_category": "백엔드 개발",
+      "preferred_position": "시니어 백엔드 개발자"
+    }
+  }
 
-  [학력]
-  - 대학교:
-  - 학과:
-  - 입학년도:
-  - 졸업년도:
-  - 졸업 여부:
+  [예시]
+  입력:
+    이름: 홍길동
+    생년월일: 1990년 1월 1일
+    이메일: hong@example.com
+    전화번호: 010-1234-5678
+    거주지: 서울특별시 강남구
 
-  [경력]
-  (복수일 경우 여러 개 작성)
-  - 근무기관:
-    근무지:
-    근무기간:
-    주요 프로젝트:
-    기술 스택:
+    [학력]
+    한국대학교 컴퓨터공학과
+    2008년 입학 ~ 2012년 졸업
 
-  [자격증]
-  (복수일 경우 여러 개 작성)
-  - 자격증명:
+    [경력]
+    ABC 주식회사 백엔드 개발자
+    2019년 1월 ~ 현재
+    Java/Spring 기반 백엔드 시스템 개발
+    프로젝트: 전자상거래 플랫폼, 결제 시스템
+    기술: Java, Spring Boot, MySQL, AWS
 
-  [기타 정보]
-  - 이메일:
-  - 전화번호:
+  출력 예시: (위의 JSON 스키마 형식과 동일)
 
-  -----------------------------------
-  예시:
-
-  이름: 홍길동
-  생년월일: 없음
-  거주지: 서울특별시 강남구
-
-  [경력]
-  - 근무기관: ABC 주식회사
-    근무지: 서울특별시
-    근무기간: 2018년 1월 ~ 2020년 12월
-    주요 프로젝트: 웹 애플리케이션 개발
-    기술 스택: Java, Spring, MySQL
-  - 근무기간 : BCD 주식회사
-    근무지: 서울특별시
-    근무기간: 2021년 1월 ~ 현재
-    주요 프로젝트: 모바일 애플리케이션 개발
-    기술 스택: Kotlin, Android
+  이제 위 이력서를 분석하여 JSON만 출력하세요.

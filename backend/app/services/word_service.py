@@ -1,62 +1,165 @@
-import time
-import shutil
-import tempfile
-from pathlib import Path
-from docx2pdf import convert
+"""
+Word 문서 처리 서비스
+.docx: python-docx로 직접 텍스트 추출 (빠르고 안정적)
+.doc: olefile + 바이너리 파싱으로 텍스트 추출 (레거시 지원)
+"""
+import struct
+from io import BytesIO
+from docx import Document
+import olefile
 
 
-def convert_docx_to_pdf_bytes(file_bytes: bytes) -> bytes:
+def extract_text_from_docx(file_bytes: bytes) -> str:
     """
-    Word(.docx) -> PDF 바이트
-    Windows + MS Word + docx2pdf 기준
-    """
-    # 임시 디렉터리 수동 관리 (context 종료시 바로 삭제하면 잠금 충돌날 수 있음)
-    tmpdir_obj = tempfile.TemporaryDirectory()
-    tmpdir = Path(tmpdir_obj.name)
-    input_path = tmpdir / "input.docx"
-    print(f"[convert] received bytes: {len(file_bytes)} bytes")
+    .docx 파일에서 직접 텍스트 추출 (MS Word 불필요!)
+    python-docx 라이브러리 사용
 
+    Args:
+        file_bytes (bytes): .docx 파일의 바이트 스트림
+
+    Returns:
+        str: 추출된 텍스트
+    """
     try:
-        # 1) DOCX 저장
-        with open(input_path, "wb") as f:
-            f.write(file_bytes)
-        print(f"[convert] saved: {input_path}")
+        print("📄 .docx 파일 → python-docx로 직접 텍스트 추출 중...")
 
-        # 2) 변환 (출력은 디렉터리로 지정)
-        print("[convert] launching Word->PDF via docx2pdf ...")
-        convert(str(input_path), str(tmpdir))  # <- output을 폴더로
-        output_path = tmpdir / f"{input_path.stem}.pdf"
+        # BytesIO로 메모리에서 직접 처리
+        doc = Document(BytesIO(file_bytes))
 
-        # Word(COM)가 파일 핸들을 놓는 데 시간이 걸릴 수 있어, 존재/사이즈 확인을 잠깐 재시도
-        for i in range(10):
-            if output_path.exists() and output_path.stat().st_size > 0:
-                break
-            time.sleep(0.2)
+        # 모든 단락의 텍스트 추출
+        paragraphs = []
+        for para in doc.paragraphs:
+            text = para.text.strip()
+            if text:  # 빈 줄 제외
+                paragraphs.append(text)
+
+        # 표(table) 내용도 추출
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text = cell.text.strip()
+                    if text:
+                        paragraphs.append(text)
+
+        result = "\n".join(paragraphs)
+        print(f"✅ .docx 텍스트 추출 완료 (길이: {len(result)} 자)")
+
+        if not result.strip():
+            return "[.docx 파일에서 텍스트를 찾을 수 없습니다.]"
+
+        return result.strip()
+
+    except Exception as e:
+        print(f"❌ .docx 텍스트 추출 오류: {str(e)}")
+        return f"[.docx 파일 읽기 실패: {str(e)}]"
+
+
+def extract_text_from_doc(file_bytes: bytes) -> str:
+    """
+    .doc 파일에서 텍스트 추출 (olefile 사용)
+    MS Word 97-2003 형식 (.doc)은 OLE (Object Linking and Embedding) 구조
+    olefile 라이브러리로 WordDocument 스트림에서 텍스트 추출
+    Args:
+        file_bytes (bytes): .doc 파일의 바이트 스트림
+    Returns:
+        str: 추출된 텍스트
+    """
+    try:
+        print("📄 .doc 파일 → olefile로 텍스트 추출 중...")
+
+        # OLE 파일 열기
+        ole = olefile.OleFileIO(file_bytes)
+
+        # WordDocument 스트림 읽기
+        if not ole.exists('WordDocument'):
+            print("⚠️ WordDocument 스트림을 찾을 수 없습니다.")
+            return "[.doc 파일 형식이 올바르지 않습니다.]"
+
+        # WordDocument 스트림에서 텍스트 추출
+        word_stream = ole.openstream('WordDocument')
+        data = word_stream.read()
+
+        # FIB (File Information Block) 헤더 파싱
+        # 텍스트 시작 위치와 길이 추출
+        try:
+            # FIB 구조에서 텍스트 정보 읽기
+            # 0x18 오프셋: fcMin (텍스트 시작 위치)
+            # 0x1C 오프셋: ccpText (문자 개수)
+            fc_min = struct.unpack('<I', data[0x18:0x1C])[0]
+            ccp_text = struct.unpack('<I', data[0x4C:0x50])[0]
+
+            # 텍스트 추출
+            text_start = fc_min
+            text_end = text_start + (ccp_text * 2)
+
+            if text_end > len(data):
+                text_end = len(data)
+
+            # 텍스트 디코딩 (Unicode)
+            raw_text = data[text_start:text_end]
+            text = raw_text.decode('utf-16-le', errors='ignore')
+
+            # 제어 문자 제거
+            text = ''.join(char for char in text if char.isprintable() or char in '\n\r\t')
+            text = text.strip()
+
+            ole.close()
+
+            if not text:
+                print("⚠️ .doc 파일에서 텍스트를 추출하지 못했습니다.")
+                return "[.doc 파일에서 텍스트를 찾을 수 없습니다.]"
+
+            print(f"✅ .doc 텍스트 추출 완료 (길이: {len(text)} 자)")
+            return text
+
+        except Exception as parse_error:
+            print(f"⚠️ .doc 파싱 중 오류: {str(parse_error)}")
+            ole.close()
+
+            # fallback: 바이너리에서 직접 텍스트 추출 시도
+            print("📄 fallback: 바이너리에서 직접 텍스트 추출 시도...")
+            return extract_text_from_doc_fallback(file_bytes)
+
+    except Exception as e:
+        print(f"❌ .doc 파일 읽기 오류: {str(e)}")
+        return f"[.doc 파일 읽기 실패: {str(e)}]"
+
+
+def extract_text_from_doc_fallback(file_bytes: bytes) -> str:
+    """
+    .doc 파일에서 텍스트 추출 (fallback 방식)
+    바이너리 데이터에서 출력 가능한 문자열 추출
+    Args:
+        file_bytes (bytes): .doc 파일의 바이트 스트림
+    Returns:
+        str: 추출된 텍스트
+    """
+    try:
+        # UTF-16 LE로 디코딩 시도
+        text = file_bytes.decode('utf-16-le', errors='ignore')
+
+        # 출력 가능한 문자만 남기기
+        printable_text = ''.join(
+            char for char in text
+            if char.isprintable() or char in '\n\r\t '
+        )
+
+        # 연속된 공백/줄바꿈 정리
+        lines = []
+        for line in printable_text.split('\n'):
+            line = ' '.join(line.split())  # 연속 공백 제거
+            if len(line) > 3:  # 의미 있는 텍스트만 (3자 이상)
+                lines.append(line)
+
+        result = '\n'.join(lines)
+
+        if result.strip():
+            print(f"✅ .doc fallback 추출 완료 (길이: {len(result)} 자)")
+            return result.strip()
         else:
-            raise RuntimeError("PDF가 생성되지 않았습니다. MS Word 설치/라이선스/권한을 확인하세요.")
+            print("⚠️ .doc fallback에서도 텍스트를 찾지 못했습니다.")
+            return "[.doc 파일에서 텍스트를 추출할 수 없습니다.]"
 
-        print(f"[convert] PDF ready: {output_path} ({output_path.stat().st_size} bytes)")
-
-        # 3) PDF 바이트 읽기
-        with open(output_path, "rb") as f:
-            pdf_bytes = f.read()
-        if not pdf_bytes:
-            raise ValueError("PDF 변환 결과가 비어 있습니다.")
-
-        return pdf_bytes
-
-    finally:
-        # 4) 임시폴더 정리 (WinError 32 대비 재시도)
-        for i in range(5):
-            try:
-                tmpdir_obj.cleanup()  # 내부적으로 rmtree 수행
-                break
-            except PermissionError:
-                # 아직 Word가 핸들을 안 놓았을 수 있음
-                time.sleep(0.3 * (i + 1))
-        else:
-            # 그래도 안되면 마지막으로 강제 시도
-            try:
-                shutil.rmtree(tmpdir, ignore_errors=True)
-            except Exception:
-                pass
+    except Exception as e:
+        print(f"❌ .doc fallback 오류: {str(e)}")
+        return f"[.doc 파일 읽기 실패: {str(e)}]"

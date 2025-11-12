@@ -8,7 +8,9 @@ class FileFormat(str, Enum):
     SCANNED_PDF = "scanned_pdf"
     IMAGE = "image"
     HWP = "hwp"
-    WORD = "word"
+    WORD_DOCX = "word_docx"
+    WORD_DOC = "word_doc"
+    TXT = "txt"
     UNKNOWN_PDF = "unknown_pdf"
     UNKNOWN = "unknown"
 
@@ -63,9 +65,16 @@ def detect_file_format(file_bytes: bytes, filename: str) -> FileFormat:
         if ext == "hwp":
             return FileFormat.HWP
 
-        # 워드 문서
-        if ext in ["doc", "docx"]:
-            return FileFormat.WORD
+        # 워드 문서 - docx와 doc 구분
+        if ext == "docx":
+            return FileFormat.WORD_DOCX
+
+        if ext == "doc":
+            return FileFormat.WORD_DOC
+
+        # 텍스트 파일
+        if ext == "txt" or mime_type == "text/plain":
+            return FileFormat.TXT
 
         # 기타
         return FileFormat.UNKNOWN

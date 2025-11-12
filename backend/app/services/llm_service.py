@@ -2,6 +2,8 @@
 개선된 LLM 서비스
 - OllamaLLM 래퍼 클래스 제공
 - 재사용 가능한 API
+- OCR 신뢰도 정보를 LLM에 전달
+- 상세 로깅 추가
 """
 try:
     from langchain_ollama import OllamaLLM as BaseLLM
@@ -24,10 +26,17 @@ from app.services.pdf_service import (
     extract_text_from_pdf,
     extract_images_from_pdf,
 )
-from app.services.ocr_service import extract_text_from_image
-from app.services.word_service import convert_docx_to_pdf_bytes
+from app.services.ocr_service import extract_text_from_image_detailed
+from app.services.word_service import extract_text_from_docx, extract_text_from_doc
+from app.services.text_service import extract_text_from_txt
+from app.services.hwp_service import extract_text_from_hwp
 from app.services.prompt_service import get_prompt_template
 from app.services.upload_service import FileFormat
+import logging
+
+# 로거 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class LLMService:
@@ -79,7 +88,7 @@ def analyze_document(
     문서 분석 및 LLM 요약
     Args:
         file_bytes: 파일 바이너리 데이터
-        file_format: 파일 포맷 (pdf, image, word, hwp 등)
+        file_format: 파일 포맷 (pdf, image, word_docx, word_doc, hwp, txt 등)
         category: 문서 카테고리 (이력서, 영수증 등)
         use_handwriting: 손글씨 인식 여부
 
@@ -88,77 +97,130 @@ def analyze_document(
     """
     try:
         text = ""
-        print(f"📋 파일 포맷: {file_format}, 카테고리: {category}, 손글씨: {use_handwriting}")
+        ocr_context = ""  # OCR 신뢰도 정보
+        logger.info(f"📋 파일 포맷: {file_format}, 카테고리: {category}, 손글씨: {use_handwriting}")
 
         # ✅ 1. 포맷별 텍스트 추출
         if file_format == FileFormat.SEARCHABLE_PDF.value:
-            print("📄 검색 가능한 PDF 문서 감지 → 텍스트 추출 중...")
+            logger.info("📄 검색 가능한 PDF 문서 감지 → 텍스트 추출 중...")
             text = extract_text_from_pdf(file_bytes)
 
         elif file_format == FileFormat.SCANNED_PDF.value:
-            print("📄 스캔된 PDF 문서 감지 → 이미지 추출 후 OCR 중...")
+            logger.info("📄 스캔된 PDF 문서 감지 → 이미지 추출 후 OCR 중...")
             images = extract_images_from_pdf(file_bytes)
-            text = "\n".join(extract_text_from_image(img, use_easy_ocr=use_handwriting) for img in images)
+            
+            # 각 이미지에 대해 OCR 수행 (상세 정보 포함)
+            texts = []
+            for idx, img in enumerate(images):
+                logger.info(f"🖼️ 페이지 {idx+1}/{len(images)} OCR 처리 중...")
+                result = extract_text_from_image_detailed(img, use_easy_ocr=use_handwriting)
+                texts.append(result['text'])
+                
+                # OCR 컨텍스트 정보 수집
+                if result.get('llm_context'):
+                    ocr_context += f"\n[페이지 {idx+1}] {result['llm_context']}"
+            
+            text = "\n\n--- 페이지 구분 ---\n\n".join(texts)
 
         elif file_format == FileFormat.IMAGE.value:
-            print("🖼️ 이미지 파일 감지 → OCR 중...")
-            text = extract_text_from_image(file_bytes, use_easy_ocr=use_handwriting)
+            logger.info("🖼️ 이미지 파일 감지 → OCR 중...")
+            result = extract_text_from_image_detailed(file_bytes, use_easy_ocr=use_handwriting)
+            text = result['text']
+            
+            logger.info(f"📝 OCR 추출 텍스트 길이: {len(text)} 자")
+            logger.info(f"📝 OCR 추출 텍스트 샘플 (처음 500자):\n{text[:500]}")
+            
+            # OCR 컨텍스트 정보 추가
+            if result.get('llm_context'):
+                ocr_context = result['llm_context']
 
-        elif file_format == FileFormat.WORD.value:
-            print("📄 Word 문서 감지 → PDF 변환 중...")
-            try:
-                pdf_bytes = convert_docx_to_pdf_bytes(file_bytes)
-                print("📄 Word → PDF 변환 완료 → 텍스트 추출 중...")
-                text = extract_text_from_pdf(pdf_bytes)
-            except Exception as e:
-                error_msg = f"Word → PDF 변환 실패: {str(e)}"
-                print(f"❌ {error_msg}")
-                return f"[오류] {error_msg}"
+        elif file_format == FileFormat.WORD_DOCX.value:
+            logger.info("📄 Word .docx 문서 감지 → python-docx로 직접 텍스트 추출 중...")
+            text = extract_text_from_docx(file_bytes)
+
+        elif file_format == FileFormat.WORD_DOC.value:
+            logger.info("📄 Word .doc 문서 감지 → olefile로 텍스트 추출 중...")
+            text = extract_text_from_doc(file_bytes)
+
+        elif file_format == FileFormat.TXT.value:
+            logger.info("📄 텍스트 파일 감지 → 인코딩 자동 감지 후 읽기...")
+            text = extract_text_from_txt(file_bytes)
 
         elif file_format == FileFormat.HWP.value:
-            error_msg = "HWP 파일 형식은 아직 지원되지 않습니다."
-            print(f"⚠️ {error_msg}")
-            return f"[오류] {error_msg}"
+            logger.info("📄 HWP 문서 감지 → pyhwp로 텍스트 추출 중...")
+            text = extract_text_from_hwp(file_bytes)
 
         else:
             error_msg = f"지원하지 않는 형식: {file_format}"
-            print(f"❌ {error_msg}")
+            logger.error(f"❌ {error_msg}")
             return f"[오류] {error_msg}"
 
-        # ✅ 2. 텍스트 후처리
+        # ✅ 2. 텍스트 후처리 (OCR 텍스트만)
+        logger.info(f"📝 후처리 전 텍스트 길이: {len(text)} 자")
         text = deduplicate_lines(text)
+        logger.info(f"📝 후처리 후 텍스트 길이: {len(text)} 자")
+        
         if not text.strip():
+            logger.warning("⚠️ 텍스트를 추출하지 못했습니다.")
             return "[오류] 텍스트를 추출하지 못했습니다."
 
-        print(f"📝 추출된 텍스트 길이: {len(text)} 자")
+        logger.info(f"📝 최종 추출 텍스트 길이: {len(text)} 자")
 
-        # ✅ 3. 프롬프트 생성 및 LLM 호출
+        # ✅ 3. OCR 컨텍스트 정보를 텍스트에 추가
+        if ocr_context:
+            logger.info(f"⚠️ OCR 컨텍스트 추가: {ocr_context}")
+            # LLM에게 OCR 신뢰도 정보 전달
+            text = f"{ocr_context}\n\n=== 추출된 텍스트 ===\n\n{text}"
+
+        # ✅ 4. 프롬프트 생성 및 LLM 호출
         prompt = get_prompt_template(
             context=text,
             category=category,
             use_handwriting=use_handwriting
         )
 
-        print("🤖 LLM 분석 시작...")
+        logger.info("🤖 LLM 분석 시작...")
         response = llm.invoke(prompt)
-        print(f"✅ LLM 응답 완료 (길이: {len(response)} 자)")
-
+        
+        # ✅ 상세 로깅
+        logger.info("=" * 80)
+        logger.info(f"✅ LLM 응답 완료")
+        logger.info(f"📊 응답 타입: {type(response)}")
+        logger.info(f"📏 응답 길이: {len(response)} 자")
+        logger.info("📄 응답 내용 (처음 500자):")
+        logger.info(response[:500])
+        logger.info("=" * 80)
+        logger.info("📄 전체 응답:")
+        logger.info(response)
+        logger.info("=" * 80)
+        
+        # ✅ 빈 응답 체크
+        if not response or not response.strip():
+            logger.error("❌ LLM이 빈 응답을 반환했습니다!")
+            return "[오류] LLM이 빈 응답을 반환했습니다."
+        
         return response
 
     except Exception as e:
         error_msg = f"문서 분석 중 오류 발생: {str(e)}"
-        print(f"❌ {error_msg}")
+        logger.error(f"❌ {error_msg}")
+        import traceback
+        logger.error(traceback.format_exc())
         return f"[오류] {error_msg}"
 
 
 def deduplicate_lines(text: str) -> str:
     """
-    중복된 줄 제거
+    중복된 줄 제거 (OCR 텍스트용)
+    
     Args:
         text: 원본 텍스트
     Returns:
         str: 중복 제거된 텍스트
     """
+    if not text:
+        return text
+    
     seen = set()
     result = []
     for line in text.splitlines():
@@ -166,4 +228,5 @@ def deduplicate_lines(text: str) -> str:
         if stripped and stripped not in seen:
             seen.add(stripped)
             result.append(stripped)
+    
     return "\n".join(result)

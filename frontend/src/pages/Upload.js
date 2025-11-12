@@ -35,31 +35,50 @@ const Upload = () => {
       // api.js의 uploadFile 함수 사용
       const result = await uploadFile(selectedFile, category, useHandwriting);
 
+      console.log('📦 백엔드 응답:', result);
+
       setProgressStep(3); // 3단계: 완료!
 
-      // 문자열 렌더링 보장
-      const safeSummary =
-        typeof result.summary === 'string'
-          ? result.summary
-          : JSON.stringify(result.summary ?? '', null, 2);
+      // ✅ 백엔드 응답 구조에 맞게 데이터 추출
+      // result = {
+      //   success: true,
+      //   file_name: "...",
+      //   data: {
+      //     summary: {...},
+      //     details: {...},
+      //     meta: {...}
+      //   }
+      // }
 
-      const safeInfo =
-        typeof result.info === 'string'
-          ? result.info
-          : JSON.stringify(result.info ?? '', null, 2);
+      if (!result.success) {
+        throw new Error('분석에 실패했습니다.');
+      }
+
+      // OCR 텍스트는 summary의 description 또는 전체 summary를 표시
+      const ocrText = result.data?.summary?.description || 
+                      JSON.stringify(result.data?.summary || {}, null, 2);
+
+      // 추출 정보는 details + meta를 합쳐서 표시
+      const extractedInfo = {
+        ...result.data?.details,
+        ...result.data?.meta
+      };
 
       // 세션 저장
       const payload = {
-        filename: result.filename ?? fileName ?? '',
-        summary: safeSummary,
-        info: safeInfo,
+        filename: result.file_name || fileName,
+        data: result.data,  // 전체 데이터 구조 전달
+        category: category,  // 카테고리 정보 전달
       };
+
+      console.log('📤 Result 페이지로 전달할 데이터:', payload);
+
       sessionStorage.setItem('analysisResult', JSON.stringify(payload));
 
       // 페이지 이동
       navigate('/result', { state: payload });
     } catch (err) {
-      console.error('분석 중 오류:', err);
+      console.error('❌ 분석 중 오류:', err);
       alert(err?.message || '분석 중 오류가 발생했습니다.');
       setProgressStep(0);
     } finally {
