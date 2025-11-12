@@ -5,142 +5,198 @@ description: >
 
 task_type: information_extraction
 
-# 출력 스키마 정의
-output_schema:
-  type: "structured_json"
-  description: "이력서 정보를 구조화된 JSON으로 반환"
-  
-  structure:
-    summary:
-      title: "지원자 이름"
-      subtitle: "주요 경력 요약"
-      datetime: "작성일"
-      description: "핵심 역량"
-      status:
-        label: "경력 년수"
-        type: "info"
-    
-    details:
-      personal:
-        name: "이름"
-        birth_date: "생년월일"
-        email: "이메일"
-        phone: "전화번호"
-        address: "거주지"
-      
-      education:
-        type: "array"
-        description: "학력 정보"
-      
-      experience:
-        type: "array"
-        description: "경력 정보"
-      
-      skills:
-        type: "array"
-        description: "보유 기술"
-      
-      certifications:
-        type: "array"
-        description: "자격증"
-
 template: |
-  당신은 이력서를 분석하여 **구조화된 JSON**으로 반환하는 시스템입니다.
-  아래 이력서 내용을 읽고 JSON 형식으로만 출력하세요.
+  당신은 이력서를 분석하여 JSON으로 반환하는 시스템입니다.
+  아래 문서를 읽고 정보를 추출하여 JSON으로 출력하세요.
 
-  ---
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📄 분석할 문서:
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {{context}}
-  ---
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [중요 규칙]
-  1. 반드시 JSON 스키마 형식으로만 응답
-  2. ```json``` 마크다운 사용 금지
-  3. 날짜는 YYYY-MM-DD 또는 YYYY-MM 형식
-  4. 정보가 없으면 null
-  5. 배열은 빈 배열 [] 가능
+  작업 지시:
+  1. 위 문서에서 이력서 정보를 추출하세요
+  2. 아래 예시와 같은 JSON 형식으로 출력하세요
+  3. 마크다운(```json)은 사용하지 마세요
+  4. { 로 시작하는 순수 JSON만 출력하세요
+  5. 날짜는 YYYY-MM-DD 또는 YYYY-MM 형식
+  6. 정보가 없으면 null 사용
+  7. 배열은 빈 배열 [] 가능
 
-  [출력 JSON 스키마]
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  예시 1: 백엔드 개발자 이력서
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  문서 내용:
+  이름: 김민수
+  생년월일: 1992-05-15
+  이메일: minsu.kim@example.com
+  전화: 010-9876-5432
+  거주지: 경기도 성남시
+
+  [학력]
+  연세대학교 컴퓨터과학과 학사
+  2011년 3월 ~ 2015년 2월
+
+  [경력]
+  테크컴퍼니 백엔드 개발자
+  2020년 3월 ~ 현재
+  - Node.js 기반 API 서버 개발
+  - 프로젝트: 물류관리시스템, 재고관리 앱
+  - 기술: Node.js, Express, MongoDB, Docker
+
+  [기술]
+  JavaScript, Node.js, MongoDB, Docker, AWS
+
+  [자격증]
+  AWS Solutions Architect Associate
+  2021-06-20
+
+  출력:
   {
     "summary": {
-      "title": "홍길동",
-      "subtitle": "5년차 백엔드 개발자",
+      "title": "김민수",
+      "subtitle": "4년차 백엔드 개발자",
       "datetime": null,
-      "description": "Java, Spring, AWS 전문 백엔드 엔지니어",
-      "status": {
-        "label": "경력 5년",
-        "type": "info"
-      }
+      "description": "Node.js, MongoDB, AWS 전문 백엔드 엔지니어",
+      "status": {"label": "경력 4년", "type": "info"}
     },
     "details": {
       "personal": {
-        "name": "홍길동",
-        "birth_date": "1990-01-01",
-        "email": "hong@example.com",
-        "phone": "010-1234-5678",
-        "address": "서울특별시 강남구"
+        "name": "김민수",
+        "birth_date": "1992-05-15",
+        "email": "minsu.kim@example.com",
+        "phone": "010-9876-5432",
+        "address": "경기도 성남시"
       },
       "education": [
         {
-          "school": "한국대학교",
-          "major": "컴퓨터공학",
+          "school": "연세대학교",
+          "major": "컴퓨터과학",
           "degree": "학사",
-          "admission_year": "2008",
-          "graduation_year": "2012",
+          "admission_year": "2011",
+          "graduation_year": "2015",
           "status": "졸업"
         }
       ],
       "experience": [
         {
-          "company": "ABC 주식회사",
+          "company": "테크컴퍼니",
           "position": "백엔드 개발자",
-          "start_date": "2019-01",
+          "start_date": "2020-03",
           "end_date": "현재",
-          "description": "Java/Spring 기반 백엔드 시스템 개발",
-          "projects": ["전자상거래 플랫폼", "결제 시스템"],
-          "tech_stack": ["Java", "Spring Boot", "MySQL", "AWS"]
+          "description": "Node.js 기반 API 서버 개발",
+          "projects": ["물류관리시스템", "재고관리 앱"],
+          "tech_stack": ["Node.js", "Express", "MongoDB", "Docker"]
         }
       ],
-      "skills": ["Java", "Spring", "MySQL", "AWS", "Docker"],
+      "skills": ["JavaScript", "Node.js", "MongoDB", "Docker", "AWS"],
       "certifications": [
         {
-          "name": "정보처리기사",
-          "issuer": "한국산업인력공단",
-          "date": "2018-08-17"
+          "name": "AWS Solutions Architect Associate",
+          "issuer": null,
+          "date": "2021-06-20"
         }
       ],
-      "languages": [
-        {
-          "name": "영어",
-          "level": "TOEIC 900"
-        }
-      ]
+      "languages": []
     },
     "meta": {
-      "total_career_years": 5,
+      "total_career_years": 4,
       "job_category": "백엔드 개발",
-      "preferred_position": "시니어 백엔드 개발자"
+      "preferred_position": null
     }
   }
 
-  [예시]
-  입력:
-    이름: 홍길동
-    생년월일: 1990년 1월 1일
-    이메일: hong@example.com
-    전화번호: 010-1234-5678
-    거주지: 서울특별시 강남구
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  예시 2: 프론트엔드 개발자 이력서
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  문서 내용:
+  박지영
+  1995-08-30
+  jiyoung.park@example.com
+  010-5555-1234
 
-    [학력]
-    한국대학교 컴퓨터공학과
-    2008년 입학 ~ 2012년 졸업
+  학력:
+  고려대학교 정보통신학과
+  2014-2018
 
-    [경력]
-    ABC 주식회사 백엔드 개발자
-    2019년 1월 ~ 현재
-    Java/Spring 기반 백엔드 시스템 개발
-    프로젝트: 전자상거래 플랫폼, 결제 시스템
-    기술: Java, Spring Boot, MySQL, AWS
+  경력:
+  스타트업A 프론트엔드 개발자
+  2019년 1월 ~ 2022년 12월
+  React 기반 웹 애플리케이션 개발
 
-  출력 예시: (위의 JSON 스키마 형식과 동일)
+  디지털에이전시B 시니어 프론트엔드
+  2023년 1월 ~ 현재
+  Vue.js 기반 기업 웹사이트 개발
 
-  이제 위 이력서를 분석하여 JSON만 출력하세요.
+  기술: React, Vue.js, TypeScript, Webpack
+
+  출력:
+  {
+    "summary": {
+      "title": "박지영",
+      "subtitle": "5년차 프론트엔드 개발자",
+      "datetime": null,
+      "description": "React, Vue.js 전문 프론트엔드 엔지니어",
+      "status": {"label": "경력 5년", "type": "info"}
+    },
+    "details": {
+      "personal": {
+        "name": "박지영",
+        "birth_date": "1995-08-30",
+        "email": "jiyoung.park@example.com",
+        "phone": "010-5555-1234",
+        "address": null
+      },
+      "education": [
+        {
+          "school": "고려대학교",
+          "major": "정보통신학",
+          "degree": "학사",
+          "admission_year": "2014",
+          "graduation_year": "2018",
+          "status": "졸업"
+        }
+      ],
+      "experience": [
+        {
+          "company": "스타트업A",
+          "position": "프론트엔드 개발자",
+          "start_date": "2019-01",
+          "end_date": "2022-12",
+          "description": "React 기반 웹 애플리케이션 개발",
+          "projects": [],
+          "tech_stack": ["React"]
+        },
+        {
+          "company": "디지털에이전시B",
+          "position": "시니어 프론트엔드",
+          "start_date": "2023-01",
+          "end_date": "현재",
+          "description": "Vue.js 기반 기업 웹사이트 개발",
+          "projects": [],
+          "tech_stack": ["Vue.js"]
+        }
+      ],
+      "skills": ["React", "Vue.js", "TypeScript", "Webpack"],
+      "certifications": [],
+      "languages": []
+    },
+    "meta": {
+      "total_career_years": 5,
+      "job_category": "프론트엔드 개발",
+      "preferred_position": null
+    }
+  }
+
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ⚠️ 주의사항:
+  - 위 예시는 참고용입니다. 예시의 데이터를 복사하지 마세요!
+  - 맨 위의 "분석할 문서"에서 실제 정보를 추출하세요
+  - 예시의 이름, 회사명, 기술을 사용하지 마세요
+  - 마크다운 없이 순수 JSON만 출력하세요
+
+  이제 맨 위의 문서를 분석하여 JSON을 출력하세요:

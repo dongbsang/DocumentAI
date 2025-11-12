@@ -194,6 +194,76 @@
   font-weight: bold;
 }
 
+/* 금액 경고 배너 */
+.amount-warning-banner {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.warning-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.warning-content {
+  flex: 1;
+}
+
+.warning-content strong {
+  display: block;
+  color: #856404;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.warning-content p {
+  color: #856404;
+  font-size: 13px;
+  margin: 0 0 3px 0;
+  line-height: 1.4;
+}
+
+.warning-hint {
+  font-size: 12px !important;
+  color: #997404 !important;
+  font-style: italic;
+}
+
+/* 품목 없을 때 메시지 컨테이너 */
+.no-items-container {
+  text-align: center;
+  padding: 40px 20px;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 2px dashed #d1d5db;
+}
+
+.no-items-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.no-items-message {
+  font-size: 15px;
+  color: #6b7280;
+  font-weight: 500;
+  margin: 0 0 10px 0;
+}
+
+.no-items-submessage {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* 메타 섹션 */
 .meta-section {
   background: #f9fafb;
@@ -235,5 +305,13 @@
   .item-details {
     flex-direction: column;
     gap: 10px;
+  }
+
+  .no-items-container {
+    padding: 30px 15px;
+  }
+
+  .no-items-icon {
+    font-size: 40px;
   }
 }

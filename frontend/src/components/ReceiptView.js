@@ -53,6 +53,18 @@ const ReceiptView = ({ data }) => {
       {payment && (
         <section className="info-section">
           <h3 className="section-title">💳 결제 정보</h3>
+          
+          {/* 금액 경고 메시지 */}
+          {meta?.amount_warning && (
+            <div className="amount-warning-banner">
+              <span className="warning-icon">⚠️</span>
+              <div className="warning-content">
+                <strong>금액 검증 경고</strong>
+                <p>{meta.amount_warning_message}</p>
+                <p className="warning-hint">실제 문서의 금액이 맞는지 확인해주세요.</p>
+              </div>
+            </div>
+          )}
           <div className="info-grid">
             <div className="info-item">
               <span className="info-label">결제 금액</span>
@@ -164,9 +176,9 @@ const ReceiptView = ({ data }) => {
       )}
 
       {/* 구매 내역 섹션 */}
-      {items && items.length > 0 && (
-        <section className="info-section">
-          <h3 className="section-title">🛒 구매 내역</h3>
+      <section className="info-section">
+        <h3 className="section-title">🛒 구매 내역</h3>
+        {items && items.length > 0 ? (
           <div className="items-list">
             {items.map((item, index) => (
               <div key={index} className="item-card">
@@ -193,8 +205,18 @@ const ReceiptView = ({ data }) => {
               </div>
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <div className="no-items-container">
+            <div className="no-items-icon">📦</div>
+            <p className="no-items-message">
+              상세 품목 정보가 영수증에 포함되어 있지 않습니다.
+            </p>
+            <p className="no-items-submessage">
+              온라인 결제나 서비스 이용의 경우 품목이 표시되지 않을 수 있습니다.
+            </p>
+          </div>
+        )}
+      </section>
 
       {/* 메타 정보 섹션 */}
       {meta && (

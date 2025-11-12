@@ -5,143 +5,174 @@ description: >
 
 task_type: information_extraction
 
-# 출력 스키마 정의
-output_schema:
-  type: "structured_json"
-  description: "진단서 정보를 구조화된 JSON으로 반환"
-  
-  structure:
-    summary:
-      title: "환자명"
-      subtitle: "주 진단명"
-      datetime: "진료일"
-      description: "진단 요약"
-      status:
-        label: "상태"
-        type: "info|warning|error"
-    
-    details:
-      document:
-        type: "진단서|소견서|처방전"
-        issue_date: "발급일"
-      
-      patient:
-        name: "환자명"
-        birth_date: "생년월일"
-        gender: "성별"
-        age: "나이"
-      
-      diagnosis:
-        visit_date: "진료일"
-        department: "진료과"
-        doctor: "담당의사"
-        diagnosis_name: "진단명"
-        diagnosis_code: "질병코드"
-        symptoms: "주요 증상"
-      
-      hospital:
-        name: "의료기관명"
-        address: "병원 주소"
-        tel: "병원 전화번호"
-      
-      treatment:
-        description: "치료 내용"
-        period: "치료 기간"
-        hospitalization: "입원 여부"
-        surgery: "수술 여부"
-
 template: |
-  당신은 의료 진단서를 분석하여 **구조화된 JSON**으로 반환하는 시스템입니다.
-  아래 문서 내용을 읽고 JSON 형식으로만 출력하세요.
+  당신은 의료 진단서를 분석하여 JSON으로 반환하는 시스템입니다.
+  아래 문서를 읽고 정보를 추출하여 JSON으로 출력하세요.
 
-  ---
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📄 분석할 문서:
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {{context}}
-  ---
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [중요 규칙]
-  1. 반드시 JSON 스키마 형식으로만 응답
-  2. ```json``` 마크다운 사용 금지
-  3. 날짜는 YYYY-MM-DD 형식
-  4. 정보가 없으면 null
-  5. 개인정보는 마스킹 처리 (주민등록번호 뒷자리 *처리)
+  작업 지시:
+  1. 위 문서에서 진단서/치료확인서 정보를 추출하세요
+  2. 아래 예시와 같은 JSON 형식으로 출력하세요
+  3. 마크다운(```json)은 사용하지 마세요
+  4. { 로 시작하는 순수 JSON만 출력하세요
+  5. 날짜는 YYYY-MM-DD 형식
+  6. 정보가 없으면 null 사용
+  7. 주민등록번호는 뒷자리 마스킹 (예: 123456-1******)
 
-  [출력 JSON 스키마]
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  예시 1: 정형외과 진단서
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  문서 내용:
+  진단서
+  환자명: 김철수
+  주민등록번호: 920315-1234567
+  진료과: 정형외과
+  진단명: 좌측 상완골 골절
+  질병코드: S42.3
+  진료일: 2024년 10월 15일
+  치료기간: 2024-10-15 ~ 2024-11-15
+  담당의: 박의사
+  병원명: 서울정형외과
+  발급일: 2024-10-20
+
+  출력:
   {
     "summary": {
-      "title": "홍길동",
-      "subtitle": "우측 슬관절 전방십자인대 파열",
-      "datetime": "2024-11-05",
-      "description": "수술 치료 완료, 재활 중",
-      "status": {
-        "label": "치료 중",
-        "type": "warning"
-      }
+      "title": "김철수",
+      "subtitle": "좌측 상완골 골절",
+      "datetime": "2024-10-15",
+      "description": "정형외과 · 치료 중",
+      "status": {"label": "치료 중", "type": "warning"}
     },
     "details": {
       "document": {
         "type": "진단서",
-        "issue_date": "2024-11-10",
-        "purpose": "보험청구용"
+        "issue_date": "2024-10-20",
+        "purpose": null
       },
       "patient": {
-        "name": "홍길동",
-        "birth_date": "1985-01-01",
-        "registration_number": "850101-1******",
+        "name": "김철수",
+        "birth_date": "1992-03-15",
+        "registration_number": "920315-1******",
         "gender": "남",
-        "age": 39,
-        "patient_id": "2024-123456"
+        "age": 32,
+        "patient_id": null
       },
       "diagnosis": {
-        "visit_date": "2024-11-05",
+        "visit_date": "2024-10-15",
         "department": "정형외과",
-        "doctor": "김의사",
-        "diagnosis_name": "우측 슬관절 전방십자인대 파열",
-        "diagnosis_code": "S83.5",
-        "severity": "중등도",
-        "symptoms": ["우측 무릎 통증", "불안정성"]
+        "doctor": "박의사",
+        "diagnosis_name": "좌측 상완골 골절",
+        "diagnosis_code": "S42.3",
+        "severity": null,
+        "symptoms": []
       },
       "hospital": {
-        "name": "서울대학교병원",
-        "address": "서울특별시 종로구 대학로 101",
-        "tel": "02-1234-5678"
+        "name": "서울정형외과",
+        "address": null,
+        "tel": null
       },
       "treatment": {
-        "description": "관절경하 전방십자인대 재건술 시행",
-        "period": "2024-11-06 ~ 2024-11-08",
-        "hospitalization": "입원",
-        "hospitalization_period": "3일",
-        "surgery": true,
-        "surgery_name": "관절경하 전방십자인대 재건술",
-        "surgery_date": "2024-11-06"
+        "description": null,
+        "period": "2024-10-15 ~ 2024-11-15",
+        "hospitalization": null,
+        "hospitalization_period": null,
+        "surgery": false,
+        "surgery_name": null,
+        "surgery_date": null
       },
       "prognosis": {
-        "current_status": "수술 후 회복 중, 목발 보행 중",
-        "future_plan": "술후 재활치료 6개월 예정",
-        "notes": "수술 후 합병증 없이 양호한 경과"
+        "current_status": null,
+        "future_plan": null,
+        "notes": null
       }
     },
-    "meta": {
-      "medical_opinion": "MRI 상 우측 무릎 전방십자인대 완전 파열 소견"
-    }
+    "meta": {"medical_opinion": null}
   }
 
-  [예시]
-  입력:
-    환자명: 홍길동
-    생년월일: 1985년 1월 1일
-    성별: 남
-    나이: 39세
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  예시 2: 치과 치료확인서
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  문서 내용:
+  치료확인서
+  환자: 이영희
+  생년월일: 1988-07-22
+  병명: 치아우식증, 치수염
+  질병코드: K02.1, K04.0
+  치료기간: 2024년 9월 1일 ~ 9월 15일
+  치료내용: 근관치료, 크라운 시술
+  병원: 서울특별시 강남구 서울치과의원
+  담당의: 최치과의사
+  발급일: 2024-09-20
 
-    진료과: 정형외과
-    담당의: 김의사
-    진료일: 2024년 11월 5일
+  출력:
+  {
+    "summary": {
+      "title": "이영희",
+      "subtitle": "치아우식증, 치수염",
+      "datetime": "2024-09-01",
+      "description": "치과 · 치료 완료",
+      "status": {"label": "완료", "type": "success"}
+    },
+    "details": {
+      "document": {
+        "type": "치료확인서",
+        "issue_date": "2024-09-20",
+        "purpose": null
+      },
+      "patient": {
+        "name": "이영희",
+        "birth_date": "1988-07-22",
+        "registration_number": null,
+        "gender": "여",
+        "age": 36,
+        "patient_id": null
+      },
+      "diagnosis": {
+        "visit_date": "2024-09-01",
+        "department": "치과",
+        "doctor": "최치과의사",
+        "diagnosis_name": "치아우식증, 치수염",
+        "diagnosis_code": "K02.1, K04.0",
+        "severity": null,
+        "symptoms": []
+      },
+      "hospital": {
+        "name": "서울치과의원",
+        "address": "서울특별시 강남구",
+        "tel": null
+      },
+      "treatment": {
+        "description": "근관치료, 크라운 시술",
+        "period": "2024-09-01 ~ 2024-09-15",
+        "hospitalization": "외래",
+        "hospitalization_period": null,
+        "surgery": false,
+        "surgery_name": null,
+        "surgery_date": null
+      },
+      "prognosis": {
+        "current_status": "치료 완료",
+        "future_plan": null,
+        "notes": null
+      }
+    },
+    "meta": {"medical_opinion": null}
+  }
 
-    진단명: 우측 슬관절 전방십자인대 파열
-    질병코드: S83.5
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    치료: 관절경하 전방십자인대 재건술
-    입원기간: 2024년 11월 6일 ~ 8일
+  ⚠️ 주의사항:
+  - 위 예시는 참고용입니다. 예시의 데이터를 복사하지 마세요!
+  - 맨 위의 "분석할 문서"에서 실제 정보를 추출하세요
+  - 예시의 환자명, 진단명을 사용하지 마세요
+  - 마크다운 없이 순수 JSON만 출력하세요
 
-  출력 예시: (위의 JSON 스키마 형식과 동일)
-
-  이제 위 진단서를 분석하여 JSON만 출력하세요.
+  이제 맨 위의 문서를 분석하여 JSON을 출력하세요:

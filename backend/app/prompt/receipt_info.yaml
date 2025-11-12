@@ -6,173 +6,188 @@ description: >
 
 task_type: information_extraction
 
-# 출력 스키마 정의 (프론트엔드 친화적)
-output_schema:
-  type: "structured_json"
-  description: "영수증 정보를 구조화된 JSON으로 반환"
-  
-  structure:
-    summary:
-      title: "가맹점명 또는 상호"
-      subtitle: "총 결제 금액 표시 (예: 464,718원)"
-      datetime: "결제 일시 (YYYY-MM-DD HH:MM:SS)"
-      description: "한 줄 요약 (카드사, 결제방법 등)"
-      status:
-        label: "승인 상태"
-        type: "success|error|warning|info"
-    
-    details:
-      payment:
-        datetime: "결제 일시"
-        amount_total: "총금액(숫자)"
-        amount_supply: "공급가액(숫자 또는 null)"
-        amount_vat: "부가세(숫자 또는 null)"
-        currency: "KRW"
-        payment_method: "결제수단"
-        installment: "할부정보"
-        card_company: "카드사"
-        approval_number: "승인번호"
-        approval_status: "승인상태"
-      
-      merchant:
-        name: "가맹점명"
-        category: "업종"
-        business_id: "사업자등록번호"
-        address: "주소"
-        tel: "전화번호"
-      
-      items:
-        type: "array"
-        description: "품목 목록"
-
 template: |
-  당신은 영수증/결제 문서를 분석하여 **구조화된 JSON**으로 반환하는 시스템입니다.
-  아래 문서 내용을 읽고, 지침을 지켜 **반드시 JSON만** 출력하세요.
+  당신은 영수증 문서를 분석하여 JSON으로 반환하는 시스템입니다.
+  아래 문서를 읽고 정보를 추출하여 JSON으로 출력하세요.
 
-  ---
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📄 분석할 문서:
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {{context}}
-  ---
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [중요 규칙]
-  1. 반드시 아래 JSON 스키마 형식으로만 응답하세요
-  2. ```json``` 마크다운 사용 금지, 순수 JSON만 출력
-  3. 모든 금액은 숫자만 (쉼표 제거)
-  4. 날짜는 YYYY-MM-DD HH:MM:SS 형식으로 정규화
-  5. 정보가 없으면 null 사용
-  6. 할부는 payment_method="할부", installment="3개월" 형식
-  7. 일시불은 payment_method="일시불", installment="일시불"
+  작업 지시:
+  1. 위 문서에서 영수증 정보를 추출하세요
+  2. 아래 예시와 같은 JSON 형식으로 출력하세요
+  3. 마크다운(```json)은 사용하지 마세요
+  4. { 로 시작하는 순수 JSON만 출력하세요
+  5. 금액은 숫자만 (쉼표 제거)
+  6. 날짜는 YYYY-MM-DD HH:MM:SS 형식
+  7. 정보가 없으면 null 사용
 
-  [출력 JSON 스키마]
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  예시 1: 카페 영수증
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  문서 내용:
+  투썸플레이스 강남점
+  카라멜마끼아또 1개 x 5,800원
+  치즈케이크 1개 x 6,500원
+  합계: 12,300원
+  국민카드 일시불
+  승인번호: 98765432
+  2024-11-10 15:22:10
+
+  출력:
   {
     "summary": {
-      "title": "가맹점명",
-      "subtitle": "464,718원",
-      "datetime": "2024-10-02 16:53:42",
-      "description": "네이버 현대카드 · 신용(개인) · 일시불",
-      "status": {
-        "label": "승인 정상",
-        "type": "success"
-      }
+      "title": "투썸플레이스 강남점",
+      "subtitle": "12,300원",
+      "datetime": "2024-11-10 15:22:10",
+      "description": "국민카드 · 일시불",
+      "status": {"label": "승인", "type": "success"}
     },
     "details": {
       "payment": {
-        "datetime": "2024-10-02 16:53:42",
-        "amount_total": 464718,
+        "datetime": "2024-11-10 15:22:10",
+        "amount_total": 12300,
         "amount_supply": null,
         "amount_vat": null,
         "service_fee": 0,
         "currency": "KRW",
         "payment_method": "신용카드",
         "installment": "일시불",
-        "card_company": "네이버 현대카드",
-        "card_brand": "현대카드",
-        "approval_number": "00961136",
+        "card_company": "국민카드",
+        "card_brand": "국민",
+        "approval_number": "98765432",
         "approval_status": "정상",
-        "transaction_type": "신용(개인)"
+        "transaction_type": null
       },
       "merchant": {
-        "name": "네이버파이낸셜 주식회사",
-        "category": "온라인쇼핑몰",
-        "representative": "박상진",
-        "business_id": "5248601528",
-        "address": "경기도 성남시 분당구 정자일로 95",
-        "tel": "031-158-8381"
+        "name": "투썸플레이스 강남점",
+        "category": "카페",
+        "representative": null,
+        "business_id": null,
+        "address": null,
+        "tel": null
       },
       "items": [
-        {
-          "name": "STAY3",
-          "quantity": 1,
-          "unit_price": 464718,
-          "total_price": 464718
-        }
+        {"name": "카라멜마끼아또", "quantity": 1, "unit_price": 5800, "total_price": 5800},
+        {"name": "치즈케이크", "quantity": 1, "unit_price": 6500, "total_price": 6500}
       ]
     },
-    "meta": {
-      "pg_provider": "네이버페이",
-      "transaction_id": null,
-      "source": "네이버페이화면"
-    }
+    "meta": {"pg_provider": null, "transaction_id": null, "source": "카드사앱"}
   }
 
-  [예시 1: 네이버페이 결제]
-  입력:
-    - 금액 464,718원
-    - 거래 일자 24. 10. 2 · 16:53:42
-    - 결제 구분 일시불
-    - 결제 카드 네이버 현대카드
-    - 승인번호 00961136
-    - 가맹점 네이버파이낸셜 주식회사
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  예시 2: 온라인 결제 (품목 없음)
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  문서 내용:
+  주식회사 테크솔루션
+  금액: 89,000원
+  거래 일자: 23. 11. 15 · 18:30:25
+  할부(6개월)
+  삼성카드
+  승인번호: 55443322
 
-  출력 예시:
+  출력:
   {
     "summary": {
-      "title": "네이버파이낸셜 주식회사",
-      "subtitle": "464,718원",
-      "datetime": "2024-10-02 16:53:42",
-      "description": "네이버 현대카드 · 일시불",
-      "status": {
-        "label": "승인 정상",
-        "type": "success"
-      }
+      "title": "주식회사 테크솔루션",
+      "subtitle": "89,000원",
+      "datetime": "2023-11-15 18:30:25",
+      "description": "삼성카드 · 할부(6개월)",
+      "status": {"label": "승인", "type": "success"}
     },
     "details": {
       "payment": {
-        "datetime": "2024-10-02 16:53:42",
-        "amount_total": 464718,
+        "datetime": "2023-11-15 18:30:25",
+        "amount_total": 89000,
         "amount_supply": null,
         "amount_vat": null,
         "service_fee": 0,
         "currency": "KRW",
-        "payment_method": "일시불",
-        "installment": "일시불",
-        "card_company": "네이버 현대카드",
-        "card_brand": "현대카드",
-        "approval_number": "00961136",
+        "payment_method": "신용카드",
+        "installment": "6개월",
+        "card_company": "삼성카드",
+        "card_brand": "삼성",
+        "approval_number": "55443322",
         "approval_status": "정상",
-        "transaction_type": "신용(개인)"
+        "transaction_type": null
       },
       "merchant": {
-        "name": "네이버파이낸셜 주식회사",
-        "category": "온라인쇼핑몰",
-        "representative": "박상진",
-        "business_id": "5248601528",
-        "address": "경기도 성남시 분당구 정자일로 95",
-        "tel": "031-158-8381"
+        "name": "주식회사 테크솔루션",
+        "category": null,
+        "representative": null,
+        "business_id": null,
+        "address": null,
+        "tel": null
       },
-      "items": [
-        {
-          "name": "STAY3",
-          "quantity": 1,
-          "unit_price": 464718,
-          "total_price": 464718
-        }
-      ]
+      "items": []
     },
-    "meta": {
-      "pg_provider": "네이버페이",
-      "transaction_id": null,
-      "source": "네이버페이화면"
-    }
+    "meta": {"pg_provider": null, "transaction_id": null, "source": "카드사앱"}
   }
 
-  이제 위 문서를 분석하여 JSON만 출력하세요.
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  예시 3: 온라인 쇼핑
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  문서 내용:
+  쿠팡
+  무선청소기
+  256,700원
+  24. 11. 12 · 20:15:33
+  일시불
+  롯데카드
+  승인번호: 11223344
+
+  출력:
+  {
+    "summary": {
+      "title": "쿠팡",
+      "subtitle": "256,700원",
+      "datetime": "2024-11-12 20:15:33",
+      "description": "롯데카드 · 일시불",
+      "status": {"label": "승인 정상", "type": "success"}
+    },
+    "details": {
+      "payment": {
+        "datetime": "2024-11-12 20:15:33",
+        "amount_total": 256700,
+        "amount_supply": null,
+        "amount_vat": null,
+        "service_fee": 0,
+        "currency": "KRW",
+        "payment_method": "신용카드",
+        "installment": "일시불",
+        "card_company": "롯데카드",
+        "card_brand": "롯데",
+        "approval_number": "11223344",
+        "approval_status": "정상",
+        "transaction_type": null
+      },
+      "merchant": {
+        "name": "쿠팡",
+        "category": "온라인쇼핑몰",
+        "representative": null,
+        "business_id": null,
+        "address": null,
+        "tel": null
+      },
+      "items": [
+        {"name": "무선청소기", "quantity": 1, "unit_price": 256700, "total_price": 256700}
+      ]
+    },
+    "meta": {"pg_provider": null, "transaction_id": null, "source": "온라인결제"}
+  }
+
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ⚠️ 주의사항:
+  - 위 예시는 참고용입니다. 예시의 데이터를 복사하지 마세요!
+  - 맨 위의 "분석할 문서"에서 실제 정보를 추출하세요
+  - 예시의 금액이나 품목명을 사용하지 마세요
+  - 마크다운 없이 순수 JSON만 출력하세요
+
+  이제 맨 위의 문서를 분석하여 JSON을 출력하세요:

@@ -1,7 +1,20 @@
-import axios from "axios";
+import axios from 'axios';
+import { validateApiResponse, getErrorMessage, getErrorDetails } from './types/api';
 
-// proxy 설정(package.json)을 사용하므로 상대 경로 사용
 const API_BASE_URL = '/api';
+
+/**
+ * API 에러 클래스
+ */
+class ApiError extends Error {
+  constructor(message, code, details, suggestion) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+    this.details = details;
+    this.suggestion = suggestion;
+  }
+}
 
 /**
  * 파일 업로드 및 분석
@@ -19,6 +32,7 @@ export const uploadFile = async (file, category = 'resume', useHandwriting = fal
   try {
     console.log('📤 업로드 시작:', {
       fileName: file.name,
+      fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
       category,
       useHandwriting,
       url: `${API_BASE_URL}/upload`
@@ -31,24 +45,98 @@ export const uploadFile = async (file, category = 'resume', useHandwriting = fal
       timeout: 120000, // 120초 타임아웃 (LLM 처리 시간 고려)
     });
 
-    console.log('✅ 업로드 성공:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('❌ 파일 업로드 실패:', error);
-    
-    if (error.response) {
-      // 서버가 응답을 반환한 경우
-      console.error('서버 응답 오류:', error.response.status, error.response.data);
-      throw new Error(error.response.data?.error || `업로드 실패 (${error.response.status})`);
-    } else if (error.request) {
-      // 요청이 전송되었으나 응답을 받지 못한 경우
-      console.error('서버 연결 오류:', error.request);
-      throw new Error('서버와 연결할 수 없습니다. 백엔드가 실행 중인지 확인하세요.');
-    } else {
-      // 요청 설정 중 오류 발생
-      console.error('요청 설정 오류:', error.message);
-      throw new Error(error.message || '알 수 없는 오류가 발생했습니다.');
+    const data = response.data;
+
+    console.log('📦 백엔드 원본 응답:', data);
+
+    // 응답 구조 검증
+    try {
+      validateApiResponse(data);
+    } catch (validationError) {
+      console.error('❌ 응답 검증 실패:', validationError);
+      throw new ApiError(
+        '서버 응답 형식이 올바르지 않습니다',
+        'INVALID_RESPONSE',
+        validationError.message,
+        null
+      );
     }
+
+    // 성공 응답
+    if (data.success) {
+      console.log('✅ 업로드 성공:', {
+        fileName: data.data.file_name,
+        docType: data.data.doc_type,
+        requestId: data.metadata?.request_id,
+        timestamp: data.metadata?.timestamp
+      });
+      return data.data;
+    }
+
+    // 실패 응답
+    const errorMessage = getErrorMessage(data);
+    const errorDetails = getErrorDetails(data);
+
+    console.error('❌ 업로드 실패:', {
+      code: data.error.code,
+      message: errorMessage,
+      details: errorDetails,
+    });
+
+    throw new ApiError(
+      errorMessage,
+      data.error.code,
+      data.error.details,
+      data.error.suggestion
+    );
+
+  } catch (error) {
+    // Axios 에러 처리
+    if (error instanceof ApiError) {
+      throw error;
+    }
+
+    if (error.response) {
+      // 서버 응답 있음
+      const data = error.response.data;
+
+      if (data && data.error) {
+        const errorMessage = getErrorMessage(data);
+        throw new ApiError(
+          errorMessage,
+          data.error.code,
+          data.error.details,
+          data.error.suggestion
+        );
+      }
+
+      throw new ApiError(
+        `서버 오류 (${error.response.status})`,
+        'HTTP_ERROR',
+        error.response.statusText,
+        null
+      );
+    }
+
+    if (error.request) {
+      // 요청 전송됐으나 응답 없음
+      console.error('❌ 서버 연결 오류:', error.request);
+      throw new ApiError(
+        '서버와 연결할 수 없습니다',
+        'NETWORK_ERROR',
+        '백엔드 서버가 실행 중인지 확인하세요',
+        'Flask 서버를 시작해주세요: flask run'
+      );
+    }
+
+    // 기타 오류
+    console.error('❌ 알 수 없는 오류:', error);
+    throw new ApiError(
+      error.message || '알 수 없는 오류가 발생했습니다',
+      'UNKNOWN_ERROR',
+      null,
+      null
+    );
   }
 };
 
@@ -58,10 +146,17 @@ export const uploadFile = async (file, category = 'resume', useHandwriting = fal
  */
 export const checkServerStatus = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/status`);
+    const response = await axios.get(`${API_BASE_URL}/status`, {
+      timeout: 5000,
+    });
     return response.data;
   } catch (error) {
     console.error('서버 상태 확인 실패:', error);
-    throw new Error('서버와 연결할 수 없습니다.');
+    throw new ApiError(
+      '서버와 연결할 수 없습니다',
+      'SERVER_UNAVAILABLE',
+      null,
+      null
+    );
   }
 };

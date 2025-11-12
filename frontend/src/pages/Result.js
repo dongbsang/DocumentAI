@@ -30,7 +30,7 @@ const Result = () => {
     );
   }
 
-  const { filename, data, category } = state;
+  const { filename, data, category, extractedFormat } = state;
 
   const handleBackClick = () => {
     navigate("/");
@@ -38,7 +38,15 @@ const Result = () => {
 
   const handleDownload = () => {
     // JSON 데이터를 파일로 다운로드
-    const dataStr = JSON.stringify(data, null, 2);
+    const downloadData = {
+      filename,
+      category,
+      extractedFormat,
+      analysis: data,
+      exportedAt: new Date().toISOString(),
+    };
+
+    const dataStr = JSON.stringify(downloadData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -67,6 +75,20 @@ const Result = () => {
     }
   };
 
+  // 파일 형식 한글 변환
+  const getFormatLabel = (format) => {
+    const formatMap = {
+      'searchable_pdf': 'PDF (텍스트)',
+      'scanned_pdf': 'PDF (스캔)',
+      'image': '이미지',
+      'word_docx': 'Word (.docx)',
+      'word_doc': 'Word (.doc)',
+      'hwp': '한글 문서',
+      'txt': '텍스트 파일',
+    };
+    return formatMap[format] || format;
+  };
+
   return (
     <div className="result-container">
       <div className="result-header">
@@ -74,6 +96,15 @@ const Result = () => {
         <p className="result-filename">
           📄 <strong>{filename}</strong>
         </p>
+        {extractedFormat && (
+          <p className="result-format" style={{ 
+            fontSize: '0.9em', 
+            color: '#666', 
+            marginTop: '5px' 
+          }}>
+            형식: {getFormatLabel(extractedFormat)}
+          </p>
+        )}
       </div>
 
       {/* 카테고리별 렌더링 */}

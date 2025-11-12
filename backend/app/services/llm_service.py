@@ -42,11 +42,11 @@ logger = logging.getLogger(__name__)
 class LLMService:
     """LLM 서비스 래퍼 클래스"""
 
-    def __init__(self, model="llama3.2:1b",  # "mistral:7b-instruct-q4_0",
+    def __init__(self, model="llama3.2:3b",  # "mistral:7b-instruct-q4_0",
                  temperature=0.3,
                  top_p=0.95
                  ):
-        """model: "llama3.2:1b"""
+        """model: ""llama3.2:3b"""
         self.llm = BaseLLM(
             model=model,
             temperature=temperature,
@@ -71,7 +71,7 @@ class LLMService:
 
 # 전역 LLM 인스턴스
 llm = BaseLLM(
-    model="llama3.2:1b",
+    model="llama3.2:3b",
     temperature=0.3,
     top_p=0.95,
     num_gpu=0  # CPU 사용 강제 (GPU 메모리 부족 방지)
@@ -108,18 +108,18 @@ def analyze_document(
         elif file_format == FileFormat.SCANNED_PDF.value:
             logger.info("📄 스캔된 PDF 문서 감지 → 이미지 추출 후 OCR 중...")
             images = extract_images_from_pdf(file_bytes)
-            
+
             # 각 이미지에 대해 OCR 수행 (상세 정보 포함)
             texts = []
             for idx, img in enumerate(images):
                 logger.info(f"🖼️ 페이지 {idx+1}/{len(images)} OCR 처리 중...")
                 result = extract_text_from_image_detailed(img, use_easy_ocr=use_handwriting)
                 texts.append(result['text'])
-                
+
                 # OCR 컨텍스트 정보 수집
                 if result.get('llm_context'):
                     ocr_context += f"\n[페이지 {idx+1}] {result['llm_context']}"
-            
+
             text = "\n\n--- 페이지 구분 ---\n\n".join(texts)
 
         elif file_format == FileFormat.IMAGE.value:
