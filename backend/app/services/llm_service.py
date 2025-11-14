@@ -18,7 +18,8 @@ except ImportError:
         raise ImportError(
             "Ollama LLM을 import할 수 없습니다. 다음을 확인하세요:\n"
             "1. 가상환경이 활성화되어 있는지\n"
-            "2. pip install langchain-ollama 또는 pip install langchain-community 실행\n"
+            "2. pip install langchain-ollama\
+                또는 pip install langchain-community 실행\n"
             "3. pip list로 설치 확인"
         )
 
@@ -27,7 +28,10 @@ from app.services.pdf_service import (
     extract_images_from_pdf,
 )
 from app.services.ocr_service import extract_text_from_image_detailed
-from app.services.word_service import extract_text_from_docx, extract_text_from_doc
+from app.services.word_service import (
+    extract_text_from_docx,
+    extract_text_from_doc
+    )
 from app.services.text_service import extract_text_from_txt
 from app.services.hwp_service import extract_text_from_hwp
 from app.services.prompt_service import get_prompt_template
@@ -98,7 +102,9 @@ def analyze_document(
     try:
         text = ""
         ocr_context = ""  # OCR 신뢰도 정보
-        logger.info(f"📋 파일 포맷: {file_format}, 카테고리: {category}, 손글씨: {use_handwriting}")
+        logger.info(f"📋 파일 포맷: {file_format},\
+                    카테고리: {category},\
+                    손글씨: {use_handwriting}")
 
         # ✅ 1. 포맷별 텍스트 추출
         if file_format == FileFormat.SEARCHABLE_PDF.value:
@@ -126,10 +132,10 @@ def analyze_document(
             logger.info("🖼️ 이미지 파일 감지 → OCR 중...")
             result = extract_text_from_image_detailed(file_bytes, use_easy_ocr=use_handwriting)
             text = result['text']
-            
+
             logger.info(f"📝 OCR 추출 텍스트 길이: {len(text)} 자")
             logger.info(f"📝 OCR 추출 텍스트 샘플 (처음 500자):\n{text[:500]}")
-            
+
             # OCR 컨텍스트 정보 추가
             if result.get('llm_context'):
                 ocr_context = result['llm_context']
@@ -159,7 +165,7 @@ def analyze_document(
         logger.info(f"📝 후처리 전 텍스트 길이: {len(text)} 자")
         text = deduplicate_lines(text)
         logger.info(f"📝 후처리 후 텍스트 길이: {len(text)} 자")
-        
+
         if not text.strip():
             logger.warning("⚠️ 텍스트를 추출하지 못했습니다.")
             return "[오류] 텍스트를 추출하지 못했습니다."
@@ -181,10 +187,10 @@ def analyze_document(
 
         logger.info("🤖 LLM 분석 시작...")
         response = llm.invoke(prompt)
-        
+
         # ✅ 상세 로깅
         logger.info("=" * 80)
-        logger.info(f"✅ LLM 응답 완료")
+        logger.info("✅ LLM 응답 완료")
         logger.info(f"📊 응답 타입: {type(response)}")
         logger.info(f"📏 응답 길이: {len(response)} 자")
         logger.info("📄 응답 내용 (처음 500자):")
@@ -193,12 +199,12 @@ def analyze_document(
         logger.info("📄 전체 응답:")
         logger.info(response)
         logger.info("=" * 80)
-        
+
         # ✅ 빈 응답 체크
         if not response or not response.strip():
             logger.error("❌ LLM이 빈 응답을 반환했습니다!")
             return "[오류] LLM이 빈 응답을 반환했습니다."
-        
+
         return response
 
     except Exception as e:
@@ -212,15 +218,16 @@ def analyze_document(
 def deduplicate_lines(text: str) -> str:
     """
     중복된 줄 제거 (OCR 텍스트용)
-    
+
     Args:
         text: 원본 텍스트
+
     Returns:
         str: 중복 제거된 텍스트
     """
     if not text:
         return text
-    
+
     seen = set()
     result = []
     for line in text.splitlines():
@@ -228,5 +235,5 @@ def deduplicate_lines(text: str) -> str:
         if stripped and stripped not in seen:
             seen.add(stripped)
             result.append(stripped)
-    
+
     return "\n".join(result)

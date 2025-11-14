@@ -185,7 +185,7 @@ class OCRService:
                     "Tesseract OCR이 설치되지 않았거나 PATH에 등록되지 않았습니다.\n\n"
                     "해결 방법:\n"
                     "1. Tesseract 다운로드: https://github.com/UB-Mannheim/tesseract/wiki\n"
-                    "2. D:\\Tesseract-OCR 또는 C:\\Program Files\\Tesseract-OCR에 설치\n"
+                    "2. C:\\Program Files\\Tesseract-OCR에 설치\n"
                     "3. 설치 시 Korean 언어 팩 체크\n"
                     "4. 백엔드 서버 재시작"
                 )
@@ -251,7 +251,8 @@ class OCRService:
 
                 # 낮은 신뢰도 경고
                 if confidence_score < 0.6:
-                    warning_message = f"⚠️ OCR 신뢰도가 낮습니다 ({confidence_score:.1%}). 결과가 정확하지 않을 수 있습니다."
+                    warning_message = f"⚠️ OCR 신뢰도가 낮습니다\
+                        ({confidence_score:.1%}). 결과가 정확하지 않을 수 있습니다."
                     logger.warning(warning_message)
 
             text = "\n".join(texts)
@@ -299,8 +300,10 @@ class OCRService:
             ratio = min(max_dim / width, max_dim / height)
             new_width = int(width * ratio)
             new_height = int(height * ratio)
-            image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-            logger.info(f"📏 이미지 크기 제한: {width}x{height} → {new_width}x{new_height}")
+            image = image.resize((new_width, new_height),
+                                 Image.Resampling.LANCZOS)
+            logger.info(f"📏 이미지 크기 제한: {width}x{height}\
+                → {new_width}x{new_height}")
 
         return image
 
@@ -356,8 +359,11 @@ class OCRService:
                 scale_factor = 2
                 new_width = width * scale_factor
                 new_height = height * scale_factor
-                image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                logger.info(f"  📏 해상도 확대: {width}x{height} → {new_width}x{new_height}")
+                image = image.resize((new_width, new_height),
+                                     Image.Resampling.LANCZOS
+                                     )
+                logger.info(f"  📏 해상도 확대: {width}x{height}\
+                    → {new_width}x{new_height}")
             else:
                 logger.info("   📏 해상도 적절, 확대 스킵")
 
@@ -439,8 +445,11 @@ class OCRService:
                 ratio = min(max_dimension / width, max_dimension / height)
                 new_width = int(width * ratio)
                 new_height = int(height * ratio)
-                image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                logger.info(f"  📏 이미지 크기 조정: {width}x{height} → {new_width}x{new_height}")
+                image = image.resize((new_width, new_height),
+                                     Image.Resampling.LANCZOS
+                                     )
+                logger.info(f"📏 이미지 크기 조정: {width}x{height}\
+                    → {new_width}x{new_height}")
 
             # 2. 대비 향상
             enhancer = ImageEnhance.Contrast(image)

@@ -1,6 +1,6 @@
 from typing import List
 
-# langchain 최신 버전에서는 text_splitter가 별도 패키지로 분리됨
+
 try:
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     print("✅ langchain_text_splitters에서 import 성공")

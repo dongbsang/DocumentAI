@@ -1,7 +1,5 @@
 """
 Word 문서 처리 서비스
-.docx: python-docx로 직접 텍스트 추출 (빠르고 안정적)
-.doc: olefile + 바이너리 파싱으로 텍스트 추출 (레거시 지원)
 """
 import struct
 from io import BytesIO
@@ -79,7 +77,6 @@ def extract_text_from_doc(file_bytes: bytes) -> str:
         word_stream = ole.openstream('WordDocument')
         data = word_stream.read()
 
-        # FIB (File Information Block) 헤더 파싱
         # 텍스트 시작 위치와 길이 추출
         try:
             # FIB 구조에서 텍스트 정보 읽기

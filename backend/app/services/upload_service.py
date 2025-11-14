@@ -27,7 +27,7 @@ def detect_file_format(file_bytes: bytes, filename: str) -> FileFormat:
 
         # PDF
         if mime_type == "application/pdf" or ext == "pdf":
-            # 안전하게 열기
+
             with fitz.open(stream=file_bytes, filetype="pdf") as doc:
                 print(f"PDF 페이지 수: {len(doc)}")
 
@@ -46,7 +46,7 @@ def detect_file_format(file_bytes: bytes, filename: str) -> FileFormat:
                 has_text = False
                 for i in range(sample_pages):
                     try:
-                        text = doc[i].get_text("text")  # ← strip 인자 없음
+                        text = doc[i].get_text("text")
                         if text and text.strip():
                             has_text = True
                             break
@@ -61,19 +61,13 @@ def detect_file_format(file_bytes: bytes, filename: str) -> FileFormat:
         if (mime_type and mime_type.startswith("image/")) or ext in _IMAGE_EXTS:
             return FileFormat.IMAGE
 
-        # 한글 문서
-        if ext == "hwp":
+        if ext == "hwp":  # 한글 문서
             return FileFormat.HWP
-
-        # 워드 문서 - docx와 doc 구분
-        if ext == "docx":
+        elif ext == "docx":  # 워드 문서
             return FileFormat.WORD_DOCX
-
-        if ext == "doc":
+        elif ext == "doc":
             return FileFormat.WORD_DOC
-
-        # 텍스트 파일
-        if ext == "txt" or mime_type == "text/plain":
+        elif ext == "txt" or mime_type == "text/plain":  # 텍스트 파일
             return FileFormat.TXT
 
         # 기타
