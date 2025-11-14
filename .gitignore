@@ -1,65 +1,248 @@
-# ========================================
-# 공통
-# ========================================
-.DS_Store
-.vscode/
-.idea/
-*.log
-
-# ========================================
-# 환경 변수
-# ========================================
-.env
-.env.*
-!.env.example
-
-# ========================================
+# =========================================
 # Python
-# ========================================
-__pycache__/
+# =========================================
+# 가상환경
+backend/.venv/
+backend/venv/
+backend/env/
+.Python
+
+# 컴파일된 Python 파일
 *.py[cod]
 *$py.class
+__pycache__/
 *.so
-.Python
-.venv/
-.venv*
-venv/
-ENV/
-env/
-.mypy_cache/
+
+# 배포 / 패키징
+backend/dist/
+backend/build/
+backend/*.egg-info/
+backend/.eggs/
+
+# PyInstaller
+backend/*.spec
+*.manifest
+
+# 환경 변수
+backend/.env
+.env
+.env.local
+.env.*.local
+
+# pytest
 .pytest_cache/
 .coverage
 htmlcov/
-*.egg-info/
-dist/
-build/
 
-# ========================================
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# =========================================
 # Node.js / React
-# ========================================
+# =========================================
+# 의존성
 node_modules/
+frontend/node_modules/
+electron/node_modules/
+
+# 프론트엔드 빌드
+frontend/build/
+frontend/dist/
+
+# 로그
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnp
-.pnp.js
+lerna-debug.log*
 
-# ========================================
+# 환경 변수
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# 캐시
+.npm
+.eslintcache
+.stylelintcache
+
+# 기타
+*.tsbuildinfo
+
+# =========================================
+# Electron
+# =========================================
 # 빌드 결과물
-# ========================================
-/frontend/build/
-/backend/dist/
+electron/dist/
+electron/build/
+electron/out/
 
-# ========================================
-# 테스트 & 커버리지
-# ========================================
-coverage/
-.nyc_output/
+# Electron 캐시
+electron/.cache/
 
-# ========================================
-# OS 관련
-# ========================================
-Thumbs.db
+# 패키지 관리
+electron/package-lock.json
+package-lock.json
+
+# =========================================
+# Ollama
+# =========================================
+# Ollama 전체 디렉토리 (용량 큼)
+ollama/
+
+# 모델 파일
+*.bin
+*.gguf
+*.ggml
+*.safetensors
+
+# =========================================
+# LibreOffice Portable
+# =========================================
+# LibreOffice Portable (용량 큼, ~500MB)
+libreoffice/
+
+# =========================================
+# 빌드 산출물
+# =========================================
+# 실행 파일
+*.exe
+*.app
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.snap
+
+# 압축 파일
+*.zip
+*.tar.gz
+*.rar
+
+# 설치 프로그램
+*Setup*.exe
+*Installer*.exe
+
+# =========================================
+# IDE / 에디터
+# =========================================
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+
+# JetBrains
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
 *.swp
 *.swo
 *~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# =========================================
+# OS
+# =========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# =========================================
+# 로그 및 데이터베이스
+# =========================================
+*.log
+*.sql
+*.sqlite
+*.db
+
+# =========================================
+# 임시 파일
+# =========================================
+*.tmp
+*.temp
+*.bak
+*.swp
+*.cache
+
+# 업로드 파일 (개발 시 테스트용)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# =========================================
+# 문서 및 미디어 (선택적)
+# =========================================
+# 테스트용 대용량 파일
+# *.pdf
+# *.docx
+# *.xlsx
+# *.pptx
+# *.hwp
+# 샘플 파일은 포함하려면 주석 처리
+
+# =========================================
+# 보안 관련
+# =========================================
+# 인증서
+*.pem
+*.key
+*.cert
+*.crt
+
+# 비밀 키
+secrets/
+.secrets/
+*.secret
+
+# =========================================
+# 기타
+# =========================================
+# Backup 폴더
+backup/
+backups/
+old/
+
+# 테스트 데이터
+test-data/
+test_data/
+
+# Coverage reports
+coverage/
+*.cover
+.coverage.*
+
+# Linting
+.eslintcache
+.stylelintcache
+
+# TypeScript
+*.tsbuildinfo

@@ -4,8 +4,39 @@
 
 ## 📚 문서 가이드
 - 🚀 **빠르게 시작하기**: [QUICKSTART.md](./QUICKSTART.md) - 5분 안에 실행
+- 💻 **개발 가이드**: [DEVELOPMENT.md](./DEVELOPMENT.md) - 개발/테스트 방법 ⭐ NEW!
+- 📦 **실행 파일 빌드**: [BUILD.md](./BUILD.md) - 독립 실행 파일 만들기
 - 🔧 **백엔드 상세**: [backend/README.md](./backend/README.md) - API 및 서비스 구조
 - 🎨 **프론트엔드 상세**: [frontend/README.md](./frontend/README.md) - UI 컴포넌트 및 구조
+
+---
+
+## 🎯 사용 방식
+
+### 👨‍💻 개발자 (코드 수정)
+**빠른 개발 - 빌드 불필요!**
+
+```bash
+# 원클릭 실행
+dev-run.bat
+
+# 코드 수정 → 저장 → 자동 반영 (핫 리로드)
+```
+
+📖 상세 가이드: [DEVELOPMENT.md](./DEVELOPMENT.md)
+
+### 👥 일반 사용자 (배포)
+**독립 실행 파일**
+
+```bash
+# 배포용 빌드 (최종 단계)
+build-scripts\build-all.bat
+
+# 생성된 실행 파일 사용
+electron\dist\DocumentAI Setup.exe
+```
+
+📖 상세 가이드: [BUILD.md](./BUILD.md)
 
 ---
 
@@ -49,206 +80,109 @@
 
 ---
 
-## 🔧 초기 설정
+## 🚀 빠른 시작
 
-### 1. 환경 변수 설정
-`.env.example` 파일을 복사해서 `.env` 파일로 만듭니다.
-
-```bash
-# Windows
-copy .env.example backend\.env
-
-# macOS/Linux
-cp .env.example backend/.env
-```
-
-`.env` 파일을 열어 필요한 환경변수를 정의합니다:
-```env
-FLASK_APP=app.main
-FLASK_ENV=development
-```
-
-⚠️ **주의**: `.env` 파일은 Git에 커밋되지 않습니다 (보안을 위해 `.gitignore`에 등록됨)
-
----
-
-## 📦 설치 가이드
-
-### Step 1: Python 가상환경 설정
+### 개발자 모드 (권장)
 
 ```bash
-# 1. backend 디렉토리로 이동
+# 1. 최초 설정 (1회만)
 cd backend
-
-# 2. 가상환경 생성
 python -m venv .venv
-
-# 3. 가상환경 활성화
-# Windows PowerShell
-.\.venv\Scripts\Activate.ps1
-
-# Windows CMD
-.\.venv\Scripts\activate.bat
-
-# macOS/Linux
-source .venv/bin/activate
-
-# 4. Python 패키지 설치
+.venv\Scripts\activate
 pip install -r requirements.txt
-
-# 5. 프로젝트 루트로 돌아가기
 cd ..
-```
 
-### Step 2: Node.js 패키지 설치
-
-```bash
-# 프론트엔드 디렉토리로 이동
 cd frontend
-
-# Node.js 패키지 설치
 npm install
-
-# 프로젝트 루트로 돌아가기
 cd ..
+
+# Ollama 설치 및 모델 다운로드
+ollama pull mistral
+
+# 2. 개발 서버 실행
+dev-run.bat
+
+# 3. 브라우저에서 확인
+http://localhost:3000
 ```
 
-### Step 3: Ollama 설치 및 모델 다운로드
+### 배포 빌드 (최종 단계)
 
-이 프로젝트는 로컬 LLM(Mistral-7B)을 실행하기 위해 **Ollama**를 사용합니다.
-
-#### Windows
-1. [Ollama 다운로드 페이지](https://ollama.com/download)에서 `.msi` 파일 다운로드
-2. 설치 후 재부팅
-
-#### macOS
 ```bash
-brew install ollama
+build-scripts\build-all.bat
 ```
 
-#### Linux (Ubuntu/Debian)
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-```
-
-#### 설치 확인
-```bash
-ollama --version
-```
-
-#### Mistral 모델 다운로드
-```bash
-# 모델 다운로드 및 실행 (최초 1회)
-ollama run mistral
-
-# 설치된 모델 목록 확인
-ollama list
-```
-
-**📌 참고 사항**
-- Python 3.10+ 권장
-- Node.js 16+ 권장
-- RAM 16GB 이상 권장
-- Ollama는 내부적으로 API 서버(`localhost:11434`)를 실행합니다
-- 모델 파일은 대용량(4~8GB)이므로 Git에 포함하지 마세요
+자세한 내용: 
+- 개발: [DEVELOPMENT.md](./DEVELOPMENT.md)
+- 배포: [BUILD.md](./BUILD.md)
 
 ---
 
-## 🚀 실행 방법
+## 📝 프로젝트 구조
 
-### ⭐ 권장 방법: 개별 실행 (2개 터미널)
-
-#### 터미널 1: Backend 실행
-
-```bash
-# 1. backend 디렉토리로 이동
-cd backend
-
-# 2. 가상환경 활성화
-.\.venv\Scripts\Activate.ps1  # Windows PowerShell
-# .\.venv\Scripts\activate.bat  # Windows CMD
-# source .venv/bin/activate      # macOS/Linux
-
-# 3. Flask 서버 실행
-flask run
 ```
-
-✅ Backend 실행 확인: `http://localhost:5000`
+DocumentAI/
+├── dev-run.bat             # 개발 서버 시작 ⭐ NEW!
+├── dev-stop.bat            # 개발 서버 종료 ⭐ NEW!
+├── backend/                # Flask API 서버
+│   ├── app/
+│   │   ├── main.py        # 진입점
+│   │   ├── routers/       # API 라우트
+│   │   ├── services/      # 비즈니스 로직
+│   │   └── prompt/        # LLM 프롬프트 템플릿
+│   └── requirements.txt
+├── frontend/              # React 웹 애플리케이션
+│   ├── src/
+│   └── package.json
+├── electron/              # Electron 데스크톱 앱
+│   ├── main.js           # Electron 메인 프로세스
+│   ├── preload.js        # 보안 브리지
+│   └── package.json
+├── build-scripts/         # 빌드 스크립트
+│   ├── build-all.bat     # Windows 통합 빌드
+│   ├── build-all.sh      # Linux/macOS 통합 빌드
+│   └── build-backend.spec # PyInstaller 설정
+├── DEVELOPMENT.md         # 개발 가이드 ⭐ NEW!
+├── BUILD.md              # 빌드 가이드
+├── QUICKSTART.md         # 빠른 시작 가이드
+└── README.md             # 이 문서
+```
 
 ---
 
-#### 터미널 2: Frontend 실행 (새 터미널 열기)
+## 🎯 주요 기능
 
-```bash
-# 1. frontend 디렉토리로 이동
-cd frontend
+### 문서 처리
+- ✅ PDF 문서 분석 (검색 가능/스캔 문서)
+- ✅ 이미지 OCR (Tesseract/EasyOCR)
+- ✅ Word 문서 처리 (.docx, .doc)
+- ✅ HWP 문서 처리 (pyhwp + fallback)
+- ✅ 텍스트 파일 처리 (자동 인코딩 감지)
+- ✅ 손글씨 인식 지원
+- ✅ 표(Table) 데이터 추출
 
-# 2. React 개발 서버 실행
-npm start
-```
+### AI 분석
+- ✅ 로컬 LLM 기반 문서 요약
+- ✅ 카테고리별 프롬프트 템플릿
+- ✅ 중복 텍스트 제거 및 후처리
 
-✅ Frontend 실행 확인: `http://localhost:3000` (자동으로 브라우저 열림)
+### 개발 편의성 (NEW!)
+- ✅ **원클릭 개발 서버**: `dev-run.bat`
+- ✅ **핫 리로드**: 코드 수정 즉시 반영
+- ✅ **빠른 종료**: `dev-stop.bat`
+- ✅ **개발 가이드**: DEVELOPMENT.md
 
----
+### 배포 옵션
+- ✅ **독립 실행 파일**: Electron 기반 데스크톱 앱
+- ✅ **올인원 패키지**: Python, Node.js 설치 불필요
+- ✅ **Ollama 내장**: 로컬 LLM 포함
+- ✅ **크로스 플랫폼**: Windows, Linux, macOS
 
-### 방법 2: 한 번에 실행 (concurrently 사용)
-
-**프로젝트 루트**에서 다음 명령어 실행:
-
-```bash
-# 먼저 concurrently 설치 (최초 1회만)
-npm install
-
-# 백엔드 + 프론트엔드 동시 실행
-npm start
-```
-
-이 명령어는 다음을 자동으로 실행합니다:
-- ✅ Backend (Flask): `http://localhost:5000`
-- ✅ Frontend (React): `http://localhost:3000`
-
-터미널 출력 예시:
-```
-[BACKEND] * Running on http://127.0.0.1:5000
-[FRONTEND] webpack compiled successfully
-```
-
-**⚠️ 주의**: 이 방법은 백엔드 가상환경이 미리 활성화되어 있어야 합니다.
-
----
-
-### 방법 3: 컬러 출력으로 실행 (디버깅용)
-
-```bash
-npm run dev
-```
-
-백엔드는 파란색, 프론트엔드는 초록색으로 구분되어 출력됩니다.
-
----
-
-## 🛑 종료 방법
-
-### 개별 실행 종료
-각 터미널에서 `Ctrl + C`
-
-### 동시 실행 종료
-`Ctrl + C` 두 번 (백엔드와 프론트엔드 모두 종료)
-
----
-
-## 🛠️ 추가 명령어
-
-```bash
-# 백엔드만 실행 (루트에서)
-npm run start:backend
-
-# 프론트엔드만 실행 (루트에서)
-npm run start:frontend
-
-# 모든 의존성 한 번에 설치
-npm run install:all
-```
+### 기술 특징
+- ✅ **외부 프로그램 최소 의존성**
+- ✅ **크로스 플랫폼** (Windows, Linux, macOS)
+- ✅ **Fallback 메커니즘** (안정성 향상)
+- ✅ **빠른 처리 속도** (0.1-3초)
 
 ---
 
@@ -295,135 +229,21 @@ easyocr==1.7.2           # 손글씨 인식용 OCR
 
 ---
 
-## 📝 프로젝트 구조
-
-```
-DocumentAI/
-├── backend/              # Flask API 서버
-│   ├── app/
-│   │   ├── main.py      # 진입점
-│   │   ├── routers/     # API 라우트
-│   │   ├── services/    # 비즈니스 로직
-│   │   │   ├── pdf_service.py      # PDF 처리
-│   │   │   ├── word_service.py     # Word 처리
-│   │   │   ├── hwp_service.py      # HWP 처리 (NEW!)
-│   │   │   ├── text_service.py     # TXT 처리 (NEW!)
-│   │   │   ├── ocr_service.py      # OCR 처리
-│   │   │   └── llm_service.py      # LLM 분석
-│   │   └── prompt/      # LLM 프롬프트 템플릿
-│   ├── .venv/           # Python 가상환경 (Git 제외)
-│   ├── .env             # 환경 변수 (Git 제외)
-│   └── requirements.txt
-├── frontend/            # React 웹 애플리케이션
-│   ├── src/
-│   ├── node_modules/    # Node.js 패키지 (Git 제외)
-│   └── package.json
-├── package.json         # 루트 설정 (동시 실행용)
-├── QUICKSTART.md        # 빠른 시작 가이드
-└── README.md            # 이 문서
-```
-
----
-
-## 🎯 주요 기능
-
-### 문서 처리
-- ✅ PDF 문서 분석 (검색 가능/스캔 문서)
-- ✅ 이미지 OCR (Tesseract/EasyOCR)
-- ✅ Word 문서 처리 (.docx, .doc)
-- ✅ **HWP 문서 처리** (pyhwp + fallback) ⭐ NEW!
-- ✅ **텍스트 파일 처리** (자동 인코딩 감지) ⭐ NEW!
-- ✅ 손글씨 인식 지원
-- ✅ 표(Table) 데이터 추출
-
-### AI 분석
-- ✅ 로컬 LLM 기반 문서 요약
-- ✅ 카테고리별 프롬프트 템플릿
-- ✅ 중복 텍스트 제거 및 후처리
-
-### 기술 특징
-- ✅ **외부 프로그램 최소 의존성**
-- ✅ **크로스 플랫폼** (Windows, Linux, macOS)
-- ✅ **Fallback 메커니즘** (안정성 향상)
-- ✅ **빠른 처리 속도** (0.1-3초)
-
----
-
-## ❓ 문제 해결
-
-### Flask 서버가 시작되지 않는 경우
-```bash
-# 가상환경이 활성화되어 있는지 확인
-# 터미널 앞에 (.venv) 표시가 있어야 함
-
-# 환경 변수 확인
-echo $FLASK_APP  # macOS/Linux
-echo %FLASK_APP%  # Windows CMD
-
-# 수동으로 설정
-export FLASK_APP=app.main  # macOS/Linux
-set FLASK_APP=app.main     # Windows
-```
-
-### 포트 충돌 발생 시
-```bash
-# 5000번 포트를 사용 중인 프로세스 확인
-# Windows
-netstat -ano | findstr :5000
-
-# macOS/Linux
-lsof -i :5000
-
-# 3000번 포트를 사용 중인 프로세스 확인
-# Windows
-netstat -ano | findstr :3000
-
-# macOS/Linux
-lsof -i :3000
-```
-
-### Ollama 연결 실패
-```bash
-# Ollama 서비스 확인
-ollama list
-
-# Mistral 모델 재다운로드
-ollama pull mistral
-
-# Ollama 서버 재시작
-# Windows: Ollama 앱 재실행
-# macOS/Linux: ollama serve
-```
-
-### Python 가상환경 활성화 실패 (Windows PowerShell)
-```powershell
-# 실행 정책 오류 시
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-
-### HWP 파일 처리 오류
-```bash
-# pyhwp 설치 확인
-pip list | findstr pyhwp
-
-# 재설치
-pip uninstall pyhwp -y
-pip install pyhwp==0.1b11
-```
-
-### TXT 파일 인코딩 오류
-```bash
-# chardet 설치 확인
-pip list | findstr chardet
-
-# 재설치
-pip uninstall chardet -y
-pip install chardet==5.2.0
-```
-
----
-
 ## 🔄 최근 업데이트
+
+### v3.1.0 (2024-11-14) - 개발 편의성 대폭 개선 🎉
+- ✨ **원클릭 개발 서버**: `dev-run.bat` 추가
+- ✨ **개발 서버 종료**: `dev-stop.bat` 추가
+- 📚 **개발 가이드 추가**: DEVELOPMENT.md
+- 🎯 **개발/배포 명확히 구분**: 워크플로우 개선
+- 💡 **빌드 불필요 개발**: 핫 리로드로 빠른 개발
+
+### v3.0.0 (2024-11-14) - Electron 빌드 지원
+- ✨ **독립 실행 파일 지원**: Electron 기반 데스크톱 앱
+- ✨ **올인원 패키징**: Python, Node.js, Ollama 모두 포함
+- ✨ **자동 빌드 스크립트**: 원클릭 빌드 (build-all.bat/sh)
+- 📚 **빌드 가이드 추가**: BUILD.md
+- 🎯 **일반 사용자 타겟**: 설치 없이 바로 사용 가능
 
 ### v2.0.0 (2024-11-11)
 - ✨ **HWP 파일 지원 추가** (pyhwp + olefile fallback)
@@ -432,6 +252,34 @@ pip install chardet==5.2.0
 - 🚀 **외부 프로그램 의존성 제거** (docx2pdf, pywin32 삭제)
 - 🎯 **처리 속도 10배 향상** (python-docx 직접 추출)
 - 🛡️ **안정성 향상** (Fallback 메커니즘 추가)
+
+---
+
+## 📊 개발 vs 배포 비교
+
+| 구분 | 개발 모드 | 빌드/배포 |
+|------|-----------|-----------|
+| **명령어** | `dev-run.bat` | `build-all.bat` |
+| **소요 시간** | 3초 | 5-10분 |
+| **핫 리로드** | ✅ 지원 | ❌ 없음 |
+| **빌드 필요** | ❌ 불필요 | ✅ 필요 |
+| **사용 시기** | 코드 개발/테스트 | 최종 배포 |
+| **빈도** | 매번 | 배포 시만 |
+
+**핵심: 개발 중에는 빌드하지 마세요!**
+
+---
+
+## ❓ 문제 해결
+
+### 개발 모드 관련
+[DEVELOPMENT.md](./DEVELOPMENT.md)의 트러블슈팅 섹션 참고
+
+### 빌드 관련
+[BUILD.md](./BUILD.md)의 트러블슈팅 섹션 참고
+
+### 일반 실행 관련
+[QUICKSTART.md](./QUICKSTART.md)의 문제 해결 섹션 참고
 
 ---
 
